@@ -18,7 +18,7 @@ COPY core_requirements.txt ./
 RUN pip install --no-cache-dir -r core_requirements.txt || true
 
 # Fallback installs for running the API and transformers
-RUN pip install --no-cache-dir uvicorn[standard] fastapi transformers "torch>=2.0" python-dotenv redis
+RUN pip install --no-cache-dir uvicorn[standard] fastapi transformers "torch>=2.0" python-dotenv redis accelerate
 
 # Copy project
 COPY . /app
