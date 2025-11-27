@@ -16,6 +16,7 @@ app = FastAPI()
 AI_ROLE = os.getenv("AI_ROLE", "executor")
 AI_NAME = os.getenv("AI_NAME", "DefaultAI")
 MODEL_NAME = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-7B-Instruct")
+MODEL_DIR = os.getenv("MODEL_DIR", "")
 TEMPERATURE = float(os.getenv("TEMPERATURE", 0.3))
 MAX_TOKENS = int(os.getenv("MAX_TOKENS", 2000))
 SYSTEM_PROMPT_TEMPLATE = os.getenv("SYSTEM_PROMPT_TEMPLATE", "You are {ai_name}, a specialized AI agent.")
@@ -87,14 +88,26 @@ model = None
 def load_model():
     global tokenizer, model
     try:
-        print(f"Memuat model: {MODEL_NAME}")
-        tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-        model = AutoModelForCausalLM.from_pretrained(
-            MODEL_NAME,
-            torch_dtype=torch.float16,
-            device_map="auto",
-            trust_remote_code=True
-        )
+        # Prefer local model directory if provided (useful when model cache is mounted into container)
+        if MODEL_DIR and os.path.isdir(MODEL_DIR):
+            print(f"Memuat model dari folder lokal: {MODEL_DIR}")
+            tokenizer = AutoTokenizer.from_pretrained(MODEL_DIR, local_files_only=True)
+            model = AutoModelForCausalLM.from_pretrained(
+                MODEL_DIR,
+                local_files_only=True,
+                torch_dtype=torch.float16,
+                device_map="auto",
+                trust_remote_code=True
+            )
+        else:
+            print(f"Memuat model dari HF: {MODEL_NAME}")
+            tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+            model = AutoModelForCausalLM.from_pretrained(
+                MODEL_NAME,
+                torch_dtype=torch.float16,
+                device_map="auto",
+                trust_remote_code=True
+            )
         print("Model berhasil dimuat")
     except Exception as e:
         print(f"Error saat memuat model: {e}")
@@ -104,10 +117,20 @@ load_model()
 
 # Redis client untuk manajemen cache dan komunikasi antar AI
 redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
+DATABASE_URL = os.getenv("DATABASE_URL", "")
+REDIS_FEEDBACK_KEY = os.getenv("REDIS_FEEDBACK_KEY", "infinite:feedback")
 
 class MessageRequest(BaseModel):
     message: str
     context: dict = {}
+
+
+class FeedbackRequest(BaseModel):
+    user_id: str | None = None
+    message: str
+    model_response: str | None = None
+    corrected_response: str | None = None
+    metadata: dict = {}
 
 @app.post("/chat")
 async def chat(request: MessageRequest):
@@ -157,6 +180,68 @@ async def chat(request: MessageRequest):
             "name": AI_NAME,
             "model": MODEL_NAME
         }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/feedback")
+async def feedback(fb: FeedbackRequest):
+    """Collect user feedback / corrections for model outputs.
+
+    Stored as JSON lines in `data/feedback.jsonl` so it can be used
+    later for fine-tuning.
+    """
+    try:
+        os.makedirs("data", exist_ok=True)
+        record = {
+            "ts": __import__("time").time(),
+            "user_id": fb.user_id,
+            "message": fb.message,
+            "model_response": fb.model_response,
+            "corrected_response": fb.corrected_response,
+            "metadata": fb.metadata,
+        }
+        fname = os.path.join("data", "feedback.jsonl")
+        with open(fname, "a", encoding="utf-8") as f:
+            f.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+        # Push to Redis list for faster ingestion / pipeline processing
+        try:
+            redis_client.rpush(REDIS_FEEDBACK_KEY, json.dumps(record, ensure_ascii=False))
+        except Exception:
+            # Non-fatal: continue even if Redis is not available
+            pass
+
+        # If DATABASE_URL provided, attempt to insert into Postgres table `feedback`
+        if DATABASE_URL:
+            try:
+                import psycopg2
+                from psycopg2.extras import Json
+
+                conn = psycopg2.connect(DATABASE_URL)
+                cur = conn.cursor()
+                cur.execute("""
+                CREATE TABLE IF NOT EXISTS feedback (
+                    id serial PRIMARY KEY,
+                    ts double precision,
+                    user_id text,
+                    message text,
+                    model_response text,
+                    corrected_response text,
+                    metadata jsonb
+                )""")
+                cur.execute(
+                    "INSERT INTO feedback (ts, user_id, message, model_response, corrected_response, metadata) VALUES (%s,%s,%s,%s,%s,%s)",
+                    (record["ts"], record["user_id"], record["message"], record["model_response"], record["corrected_response"], Json(record["metadata"]))
+                )
+                conn.commit()
+                cur.close()
+                conn.close()
+            except Exception:
+                # Non-fatal: log or ignore
+                pass
+
+        return {"status": "ok", "written": True}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
