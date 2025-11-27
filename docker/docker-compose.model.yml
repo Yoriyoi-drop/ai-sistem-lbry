@@ -1,0 +1,33 @@
+version: "3.8"
+
+services:
+  infinite-ai-api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.cpu
+    image: infinite-ai-api:latest
+    container_name: infinite-ai-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - HF_HOME=/root/.cache/huggingface
+      # Optionally set MODEL_DIR to the exact folder inside the HF cache where model files live
+      - MODEL_DIR=
+      - AI_ROLE=executor
+      - AI_NAME=InfiniteAI
+    volumes:
+      # Model cache volume - create with `docker volume create ai-models` and copy HF cache into it
+      - ai-models:/root/.cache/huggingface
+      # Mount repo (optional, for live code updates)
+      - ..:/app:ro
+
+volumes:
+  ai-models:
+    driver: local
+
+# Notes:
+# - After running the `setup-models.sh` on the host and copying the HF cache into the
+#   docker volume (see docker/README.md), you can either set MODEL_DIR to the exact
+#   model folder inside the cache or leave MODEL_DIR empty and let the service download
+#   the model from Hugging Face when needed (if network access is available).
