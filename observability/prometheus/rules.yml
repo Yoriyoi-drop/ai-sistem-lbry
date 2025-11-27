@@ -1,0 +1,105 @@
+groups:
+  - name: SecurityAlerts
+    rules:
+      # High threat detection rate
+      - alert: HighThreatDetectionRate
+        expr: increase(threats_detected_total[5m]) > 10
+        for: 1m
+        labels:
+          severity: critical
+          team: security
+        annotations:
+          summary: "High threat detection rate"
+          description: "Detected {{ $value }} threats in the last 5 minutes"
+          
+      # Failed login attempts
+      - alert: HighFailedLoginRate
+        expr: increase(api_errors_total{error_type="failed_login"}[5m]) > 20
+        for: 2m
+        labels:
+          severity: high
+          team: security
+        annotations:
+          summary: "High failed login rate"
+          description: "Detected {{ $value }} failed login attempts in the last 5 minutes"
+          
+      # API Error rate
+      - alert: HighAPIErrorRate
+        expr: rate(api_errors_total[5m]) > 0.1
+        for: 3m
+        labels:
+          severity: high
+          team: backend
+        annotations:
+          summary: "High API error rate"
+          description: "API error rate is {{ $value }} per second"
+
+  - name: PerformanceAlerts
+    rules:
+      # High response time
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+        for: 2m
+        labels:
+          severity: high
+          team: backend
+        annotations:
+          summary: "High API response time"
+          description: "95th percentile response time is {{ $value }} seconds"
+          
+      # Service down
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: operations
+        annotations:
+          summary: "Service is down"
+          description: "{{ $labels.instance }} is down"
+          
+      # High memory usage
+      - alert: HighMemoryUsage
+        expr: 100 - ((node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100) > 90
+        for: 2m
+        labels:
+          severity: high
+          team: operations
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is {{ $value }}%"
+          
+      # High CPU usage
+      - alert: HighCPUUsage
+        expr: 100 - avg(irate(node_cpu_seconds_total{mode="idle"}[5m])) by (instance) * 100 > 90
+        for: 2m
+        labels:
+          severity: high
+          team: operations
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is {{ $value }}%"
+
+  - name: ScanAlerts
+    rules:
+      # High severity findings
+      - alert: HighSeverityFindings
+        expr: increase(security_findings_total{severity="high"}[10m]) > 5
+        for: 1m
+        labels:
+          severity: high
+          team: security
+        annotations:
+          summary: "High severity security findings"
+          description: "Detected {{ $value }} high severity findings in the last 10 minutes"
+          
+      # Critical findings
+      - alert: CriticalFindings
+        expr: increase(security_findings_total{severity="critical"}[5m]) > 0
+        for: 0m
+        labels:
+          severity: critical
+          team: security
+        annotations:
+          summary: "Critical security findings detected"
+          description: "Detected {{ $value }} critical security findings"

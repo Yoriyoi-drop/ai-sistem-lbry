@@ -1,0 +1,299 @@
+# cicd/.github/workflows/ci-cd.yml
+# CI/CD Pipeline for Infinite AI Security Platform
+
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.10, 3.11]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-cov black flake8
+
+    - name: Lint with flake8
+      run: |
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+    - name: Format check with Black
+      run: |
+        black --check --diff .
+
+    - name: Test with pytest
+      run: |
+        pytest tests/ -v --cov=apps --cov-report=xml
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Run Trivy vulnerability scanner in repo mode
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+    - name: Run CodeQL Analysis
+      uses: github/codeql-action/analyze@v2
+
+  build-and-push-api:
+    runs-on: ubuntu-latest
+    needs: [test, security-scan]
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v2
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata for API Gateway
+      id: meta-api
+      uses: docker/metadata-action@v4
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/api-gateway
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=sha
+
+    - name: Build and push API Gateway image
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        file: apps/api/Dockerfile
+        push: true
+        tags: ${{ steps.meta-api.outputs.tags }}
+        labels: ${{ steps.meta-api.outputs.labels }}
+
+  build-and-push-ai-hub:
+    runs-on: ubuntu-latest
+    needs: [test, security-scan]
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v2
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata for AI Hub
+      id: meta-ai
+      uses: docker/metadata-action@v4
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/ai-hub
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=sha
+
+    - name: Build and push AI Hub image
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        file: packages/ai-hub/Dockerfile
+        push: true
+        tags: ${{ steps.meta-ai.outputs.tags }}
+        labels: ${{ steps.meta-ai.outputs.labels }}
+
+  build-and-push-scanner-go:
+    runs-on: ubuntu-latest
+    needs: [test, security-scan]
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v2
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata for Go Scanner
+      id: meta-scanner
+      uses: docker/metadata-action@v4
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/scanner-go
+        tags: |
+          type=ref,event=branch
+          type=ref=event=pr
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=sha
+
+    - name: Build and push Go Scanner image
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        file: packages/security-engine/scanner_go/Dockerfile
+        push: true
+        tags: ${{ steps.meta-scanner.outputs.tags }}
+        labels: ${{ steps.meta-scanner.outputs.labels }}
+
+  build-and-push-labyrinth-rust:
+    runs-on: ubuntu-latest
+    needs: [test, security-scan]
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v2
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata for Rust Labyrinth
+      id: meta-labyrinth
+      uses: docker/metadata-action@v4
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/labyrinth-rust
+        tags: |
+          type=ref,event=branch
+          type=ref=event=pr
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=sha
+
+    - name: Build and push Rust Labyrinth image
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        file: packages/security-engine/labyrinth_rust/Dockerfile
+        push: true
+        tags: ${{ steps.meta-labyrinth.outputs.tags }}
+        labels: ${{ steps.meta-labyrinth.outputs.labels }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [build-and-push-api, build-and-push-ai-hub, build-and-push-scanner-go, build-and-push-labyrinth-rust]
+    if: github.ref == 'refs/heads/main'
+    environment: production
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up kubectl
+      uses: azure/k8s-set-context@v3
+      with:
+        kubeconfig: ${{ secrets.KUBECONFIG }}
+
+    - name: Deploy to Kubernetes
+      run: |
+        kubectl apply -f production/kubernetes/base/
+        kubectl rollout status deployment/api-gateway -n infinite-ai-security
+        kubectl rollout status deployment/ai-hub -n infinite-ai-security 
+        kubectl rollout status deployment/scanner-go -n infinite-ai-security
+        kubectl rollout status deployment/labyrinth-rust -n infinite-ai-security
+
+    - name: Verify deployment
+      run: |
+        kubectl get pods -n infinite-ai-security
+        kubectl get services -n infinite-ai-security
+        kubectl get deployments -n infinite-ai-security
+
+  notify:
+    runs-on: ubuntu-latest
+    needs: [deploy]
+    if: always()
+    steps:
+    - name: Notify on Slack (Success)
+      if: ${{ needs.deploy.result == 'success' }}
+      run: |
+        curl -X POST -H 'Content-type: application/json' \
+        --data '{"text":"✅ Deployment successful to production: ${{ github.repository }}@${{ github.sha }}"}' \
+        ${{ secrets.SLACK_WEBHOOK_URL }}
+
+    - name: Notify on Slack (Failure)
+      if: ${{ needs.deploy.result == 'failure' }}
+      run: |
+        curl -X POST -H 'Content-type: application/json' \
+        --data '{"text":"❌ Deployment failed to production: ${{ github.repository }}@${{ github.sha }}"}' \
+        ${{ secrets.SLACK_WEBHOOK_URL }}

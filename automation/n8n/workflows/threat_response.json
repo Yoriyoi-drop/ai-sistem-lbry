@@ -1,0 +1,279 @@
+{
+  "name": "Security Threat Response Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "security/threat-detected",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook-trigger-1",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ],
+      "webhookId": "security-threat-webhook"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition-1",
+              "leftValue": "={{ $json.severity }}",
+              "rightValue": "critical",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "severity-check-1",
+      "name": "Check Severity",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [
+        500,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "action",
+              "value": "block_ip"
+            },
+            {
+              "name": "source_ip",
+              "value": "={{ $json.source_ip }}"
+            },
+            {
+              "name": "timestamp",
+              "value": "={{ new Date().toISOString() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "block-ip-data-1",
+      "name": "Prepare Block IP Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        750,
+        150
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.API_BASE_URL }}/api/v1/scans",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.API_TOKEN }}"
+            }
+          ]
+        },
+        "body": {
+          "name": "Automated Security Scan",
+          "scan_type": "vulnerability",
+          "target": "={{ $json.source_ip }}",
+          "parameters": {
+            "deep_scan": true,
+            "context": "threat_response"
+          }
+        },
+        "options": {}
+      },
+      "id": "api-call-1",
+      "name": "API Call - Block IP",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        750,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "fields": {
+          "values": {
+            "string": [
+              {
+                "name": "message",
+                "value": "={{ 'Critical threat detected from IP: ' + $json.source_ip }}"
+              },
+              {
+                "name": "severity",
+                "value": "={{ $json.severity }}"
+              },
+              {
+                "name": "timestamp",
+                "value": "={{ new Date().toISOString() }}"
+              }
+            ]
+          }
+        }
+      },
+      "id": "notification-data-1",
+      "name": "Prepare Notification Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        750,
+        450
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SLACK_WEBHOOK_URL }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "body": {
+          "text": "={{ '🚨 CRITICAL SECURITY ALERT: ' + $json.message }}"
+        },
+        "options": {}
+      },
+      "id": "slack-notification-1",
+      "name": "Slack Notification",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1000,
+        450
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "valuesToSend": "defineBelow",
+        "webhookId": "security-incident-report",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "incident_id",
+              "value": "={{ new Date().getTime() }}"
+            },
+            {
+              "name": "severity",
+              "value": "={{ $json.severity }}"
+            },
+            {
+              "name": "source_ip",
+              "value": "={{ $json.source_ip }}"
+            },
+            {
+              "name": "timestamp",
+              "value": "={{ new Date().toISOString() }}"
+            },
+            {
+              "name": "action_taken",
+              "value": "IP blocked and security scan initiated"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "report-incident-1",
+      "name": "Report Incident",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Check Severity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Severity": {
+      "main": [
+        [
+          {
+            "node": "Prepare Block IP Data",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "API Call - Block IP",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prepare Notification Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Block IP Data": {
+      "main": [
+        [
+          {
+            "node": "Report Incident",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Notification Data": {
+      "main": [
+        [
+          {
+            "node": "Slack Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1",
+  "triggerCount": 0,
+  "tags": []
+}

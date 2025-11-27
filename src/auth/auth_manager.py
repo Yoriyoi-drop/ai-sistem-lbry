@@ -30,7 +30,8 @@ class AuthManager:
             salt, hash_hex = hashed.split(':')
             expected = hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), 100000)
             return expected.hex() == hash_hex
-        except:
+        except (ValueError, TypeError):
+            # Invalid hash format or type error
             return False
     
     def create_token(self, username: str, role: str = "user") -> str:
@@ -83,7 +84,8 @@ class AuthManager:
                 return None
             
             return payload
-        except:
+        except (json.JSONDecodeError, ValueError, TypeError, IndexError):
+            # Invalid token format, JSON decode error, or other parsing issues
             return None
     
     def is_account_locked(self, username: str) -> bool:

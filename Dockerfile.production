@@ -32,8 +32,6 @@ RUN pip install --no-cache-dir -r requirements_production.txt
 
 # Copy application code
 COPY ./app /app/app
-COPY ./reverse_engineering /app/reverse_engineering
-COPY ./security_engine /app/security_engine
 
 # Create necessary directories
 RUN mkdir -p /app/logs /app/uploads /app/temp

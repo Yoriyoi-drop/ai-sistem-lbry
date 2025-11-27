@@ -33,7 +33,7 @@ API_PORT = int(os.getenv("API_PORT", 8000))
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///infinite_security.db")
 
 # Security Configuration
-JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "dev-secret-change-in-production")
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")  # No default to force environment variable
 API_KEY = os.getenv("API_KEY", "infinite-ai-security-2024")
 
 # AI Agents Configuration

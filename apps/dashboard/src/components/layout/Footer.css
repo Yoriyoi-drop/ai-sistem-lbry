@@ -1,0 +1,15 @@
+/* Footer Component Styles */
+
+.footer {
+    padding: 20px;
+    text-align: center;
+    background: white;
+    border-top: 1px solid #e2e8f0;
+    margin-top: auto;
+}
+
+.footer-text {
+    margin: 0;
+    font-size: 14px;
+    color: #718096;
+}

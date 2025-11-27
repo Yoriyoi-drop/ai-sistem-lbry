@@ -110,7 +110,8 @@ def generate_env_file():
             import os
             os.chmod(env_path, 0o600)
             print("✅ Set .env file permissions to 600 (owner read/write only)")
-        except:
+        except (OSError, AttributeError):
+            # OSError for permission issues, AttributeError on Windows where chmod might not be available
             print("⚠️  Could not set file permissions. Please run: chmod 600 .env")
     else:
         print()

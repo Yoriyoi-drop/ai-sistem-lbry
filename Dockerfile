@@ -1,69 +1,54 @@
-# Production Dockerfile for Infinite AI Security Platform V2.0
-# Multi-stage build for optimized image size
+# Dockerfile untuk Multi-AI System Infinite AI Security
 
-# ===== BUILD STAGE =====
-FROM python:3.12-slim as builder
+FROM python:3.11-slim
 
-# Set working directory
+# Install dependencies
+RUN pip install --no-cache-dir \
+    transformers \
+    torch \
+    fastapi \
+    uvicorn \
+    pydantic \
+    redis \
+    sqlalchemy \
+    python-dotenv
+
 WORKDIR /app
 
-# Install build dependencies
-RUN apt-get update && apt-get install -y \
-    gcc \
-    g++ \
-    make \
-    libpq-dev \
-    && rm -rf /var/lib/apt/lists/*
+# Copy aplikasi
+COPY . /app
 
-# Copy requirements
-COPY requirements.txt .
+# Environment variables untuk konfigurasi AI
+ENV AI_ROLE=${AI_ROLE:-executor}
+ENV AI_NAME=${AI_NAME:-DefaultAI}
+ENV MODEL_NAME="Qwen/Qwen2.5-7B-Instruct"
+ENV TEMPERATURE=0.3
+ENV MAX_TOKENS=2000
 
-# Install Python dependencies
-RUN pip install --no-cache-dir --user -r requirements.txt
-
-# ===== RUNTIME STAGE =====
-FROM python:3.12-slim
-
-# Set environment variables
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
-
-# Create non-root user
-RUN groupadd -r appuser && useradd -r -g appuser appuser
-
-# Set working directory
-WORKDIR /app
-
-# Install runtime dependencies
-RUN apt-get update && apt-get install -y \
-    libpq5 \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy Python dependencies from builder
-COPY --from=builder /root/.local /home/appuser/.local
-
-# Copy application code
-COPY --chown=appuser:appuser . .
-
-# Create necessary directories
-RUN mkdir -p logs backups session && \
-    chown -R appuser:appuser logs backups session
-
-# Switch to non-root user
-USER appuser
-
-# Add local bin to PATH
-ENV PATH=/home/appuser/.local/bin:$PATH
-
-# Expose port
-EXPOSE 8000
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
-
-# Run application
-CMD ["gunicorn", "main_v2:app", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000"]
+# Sistem Prompt Universal yang dinamis berdasarkan role
+ENV SYSTEM_PROMPT_TEMPLATE="You are {ai_name}, a specialized AI agent in the Infinite AI Security system.\n\n\
+CORE IDENTITY:\n\
+- Role: {role_type}\n\
+- Name: {ai_name}\n\
+- Function: {function_desc}\n\n\
+SYSTEM ARCHITECTURE:\n\
+You work with:\n\
+- AI-1 (AstraMind): Strategic planner for security solutions\n\
+- AI-2 (SpectraLogic): Security analysis and vulnerability assessment\n\
+- AI-3 (ForgeRun): Implementation of security measures\n\
+- AI-4 (GuardianOS): Security validation and compliance\n\
+- AI-5 (ChronaCore): Security knowledge and memory management\n\
+- Orchestrator (NexaFlow): Task coordinator for security operations\n\n\
+YOUR SPECIFIC ROLE:\n\
+{role_instructions}\n\n\
+OPERATIONAL RULES:\n\
+1. Stay within your role boundaries\n\
+2. Communicate clearly with other agents\n\
+3. Use standardized output format\n\
+4. Handle errors gracefully\n\
+5. Maintain security-focused operations\n\n\
+OUTPUT FORMAT:\n\
+{output_format}\n\n\
+CONSTRAINTS:\n\
+{constraints}\n\n\
+Always respond professionally, precisely, and within your designated function. Focus on security best practices in all operations."

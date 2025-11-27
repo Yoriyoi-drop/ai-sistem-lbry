@@ -1,0 +1,339 @@
+{
+  "name": "Agent Auto-Scaling Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "monitoring/agent-status",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "agent-status-webhook-1",
+      "name": "Agent Status Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ],
+      "webhookId": "agent-status-monitor"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Calculate system load based on agent status\nconst agents = $input.all();\nlet totalLoad = 0;\nlet totalAgents = agents.length;\n\nfor (const agent of agents) {\n  totalLoad += agent.json.load || 0;\n}\n\nconst averageLoad = totalLoad / totalAgents;\nconst status = averageLoad > 70 ? 'high' : averageLoad > 40 ? 'medium' : 'low';\n\nreturn [{\n  json: {\n    average_load: averageLoad,\n    status: status,\n    total_agents: totalAgents,\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "calculate-load-1",
+      "name": "Calculate System Load",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [
+        500,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition-1",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "high",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "high-load-check-1",
+      "name": "Check High Load",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [
+        750,
+        150
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.API_BASE_URL }}/api/v1/agents",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.API_TOKEN }}"
+            }
+          ]
+        },
+        "body": {
+          "name": "Auto-Scaling-Agent-{{Math.floor(Math.random() * 1000)}}",
+          "description": "Auto-created agent for load balancing",
+          "agent_type": "vulnerability_scanner",
+          "configuration": {
+            "auto_created": true,
+            "scaling_reason": "High system load detected",
+            "target_load": 50
+          }
+        },
+        "options": {}
+      },
+      "id": "create-agent-1",
+      "name": "Create New Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1000,
+        150
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "valuesToSend": "defineBelow",
+        "webhookId": "scaling-event",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "event_type",
+              "value": "auto_scale"
+            },
+            {
+              "name": "action",
+              "value": "agent_created"
+            },
+            {
+              "name": "reason",
+              "value": "High system load detected"
+            },
+            {
+              "name": "load_threshold",
+              "value": "70%"
+            },
+            {
+              "name": "current_load",
+              "value": "={{ $json.average_load }}%"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "log-scaling-event-1",
+      "name": "Log Scaling Event",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        1250,
+        150
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition-2",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "low",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "low-load-check-1",
+      "name": "Check Low Load",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [
+        750,
+        450
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Find agents that can be scaled down\nconst agents = [{\n  json: { id: 1, name: 'Scanner-Agent-01', status: 'idle', uptime_hours: 24 }\n}];\n\n// In real implementation, fetch idle agents from API\nconst idleAgents = agents.filter(agent => agent.json.status === 'idle' && agent.json.uptime_hours > 12);\n\nif (idleAgents.length > 0) {\n  return [{\n    json: {\n      agent_to_terminate: idleAgents[0].json.id,\n      reason: 'Low system load, agent idle for >12 hours',\n      timestamp: new Date().toISOString()\n    }\n  }];\n} else {\n  return [];\n}"
+      },
+      "id": "find-idle-agents-1",
+      "name": "Find Idle Agents",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        450
+      ]
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "={{ $env.API_BASE_URL }}/api/v1/agents/{{$json.agent_to_terminate}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.API_TOKEN }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "terminate-agent-1",
+      "name": "Terminate Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1250,
+        450
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "valuesToSend": "defineBelow",
+        "webhookId": "scaling-down-event",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "event_type",
+              "value": "auto_scale"
+            },
+            {
+              "name": "action",
+              "value": "agent_terminated"
+            },
+            {
+              "name": "reason",
+              "value": "Low system load"
+            },
+            {
+              "name": "agent_id",
+              "value": "={{ $json.agent_to_terminate }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "log-downscale-event-1",
+      "name": "Log Downscale Event",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        1500,
+        450
+      ]
+    }
+  ],
+  "connections": {
+    "Agent Status Webhook": {
+      "main": [
+        [
+          {
+            "node": "Calculate System Load",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate System Load": {
+      "main": [
+        [
+          {
+            "node": "Check High Load",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Check Low Load",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check High Load": {
+      "main": [
+        [
+          {
+            "node": "Create New Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create New Agent": {
+      "main": [
+        [
+          {
+            "node": "Log Scaling Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Low Load": {
+      "main": [
+        [
+          {
+            "node": "Find Idle Agents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Idle Agents": {
+      "main": [
+        [
+          {
+            "node": "Terminate Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Terminate Agent": {
+      "main": [
+        [
+          {
+            "node": "Log Downscale Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1",
+  "triggerCount": 0,
+  "tags": []
+}

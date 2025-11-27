@@ -1,0 +1,54 @@
+{
+  "executions": {
+    "process": "main",
+    "concurrency": {
+      "max": 10
+    }
+  },
+  "generic": {
+    "communityPackages": {
+      "enabled": true
+    }
+  },
+  "userManagement": {
+    "emails": {
+      "mode": "smtp"
+    }
+  },
+  "nodes": {
+    "exclude": []
+  },
+  "endpoints": {
+    "rest": "rest",
+    "webhook": "webhook",
+    "webhookTest": "webhook-test"
+  },
+  "externalFrontendHooksUrls": [
+    "https://public.n8n.cloud/frontendl/hooks.json"
+  ],
+  "externalHookFiles": [],
+  "templates": {
+    "enabled": true,
+    "url": "https://api.n8n.io/api/templates/"
+  },
+  "versionNotifications": {
+    "enabled": true,
+    "endpoint": "https://api.n8n.io/api/notifications/"
+  },
+  "telemetry": {
+    "enabled": false
+  },
+  "deployment": {
+    "type": "default"
+  },
+  "logLevel": "info",
+  "logOutput": "file",
+  "logger": {
+    "file": {
+      "enabled": true,
+      "level": "info",
+      "fileCountMax": 3,
+      "fileSizeMax": 10485760
+    }
+  }
+}

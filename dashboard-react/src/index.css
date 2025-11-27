@@ -1,0 +1,81 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Sora:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-light-border dark:border-dark-border;
+  }
+
+  body {
+    @apply bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text;
+    @apply font-sans antialiased;
+  }
+}
+
+@layer utilities {
+  .glass-effect {
+    @apply backdrop-blur-md bg-opacity-80;
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-light-accent to-light-accent-secondary dark:from-dark-accent dark:to-dark-accent-secondary;
+  }
+
+  .card-hover {
+    @apply hover:-translate-y-1 hover:shadow-xl transition-all duration-300;
+  }
+
+  .status-dot {
+    @apply w-3 h-3 rounded-full inline-block animate-pulse-slow;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-light-panel dark:bg-dark-panel;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-light-border dark:bg-dark-border rounded;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-light-accent dark:bg-dark-accent;
+}
+
+/* Animations */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.skeleton {
+  animation: shimmer 2s infinite linear;
+  background: linear-gradient(to right,
+      #f6f7f8 0%,
+      #edeef1 20%,
+      #f6f7f8 40%,
+      #f6f7f8 100%);
+  background-size: 1000px 100%;
+}
+
+.dark .skeleton {
+  background: linear-gradient(to right,
+      #1a1a1a 0%,
+      #2a2a2a 20%,
+      #1a1a1a 40%,
+      #1a1a1a 100%);
+}

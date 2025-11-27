@@ -1,0 +1,50 @@
+/* Layout Component Styles */
+
+.layout {
+    min-height: 100vh;
+    background: #f7fafc;
+}
+
+.layout-container {
+    display: flex;
+    min-height: calc(100vh - 64px);
+}
+
+.layout-main {
+    flex: 1;
+    padding: 24px;
+    margin-left: 260px;
+    transition: margin-left 0.3s;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+@media (max-width: 768px) {
+    .layout-main {
+        margin-left: 0;
+    }
+}
+
+/* Common page styles */
+.page-header {
+    margin-bottom: 24px;
+}
+
+.page-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1a202c;
+    margin: 0 0 8px 0;
+}
+
+.page-subtitle {
+    font-size: 16px;
+    color: #718096;
+    margin: 0;
+}
+
+.page-content {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}

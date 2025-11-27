@@ -4,9 +4,9 @@ API Gateway - Entry point for all requests
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes import auth, agents, security, workflow, subscription, health, admin
-from app.middleware.logging import LoggingMiddleware
-from app.middleware.rate_limit import RateLimitMiddleware
-from app.middleware.request_size_middleware import RequestSizeMiddleware
+# from app.middleware.logging import LoggingMiddleware
+# from app.middleware.rate_limit import RateLimitMiddleware
+# from app.middleware.request_size_middleware import RequestSizeMiddleware
 
 app = FastAPI(
     title="AI Security Platform API",
@@ -22,8 +22,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.add_middleware(LoggingMiddleware)
-app.add_middleware(RateLimitMiddleware)
+# app.add_middleware(LoggingMiddleware)
+# app.add_middleware(RateLimitMiddleware)
 
 # Routes
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
@@ -32,6 +32,7 @@ app.include_router(security.router, prefix="/api/v1/security", tags=["security"]
 app.include_router(workflow.router, prefix="/api/v1/workflow", tags=["workflow"])
 app.include_router(subscription.router, prefix="/api/v1/subscription", tags=["subscription"])
 app.include_router(health.router, prefix="/api/v1/health", tags=["health"])
+app.include_router(admin.router, prefix="/admin", tags=["admin"])
 
 @app.get("/")
 async def root():

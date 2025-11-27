@@ -1,0 +1,15 @@
+[Unit]
+Description=Infinite AI Security System
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/home/whale-d/Unduhan/backup/ai-p/infinite_ai_security
+ExecStart=/bin/bash -c 'cd /home/whale-d/Unduhan/backup/ai-p/infinite_ai_security && ./run_auto.sh auto'
+ExecStop=/bin/bash -c 'cd /home/whale-d/Unduhan/backup/ai-p/infinite_ai_security && ./run_auto.sh cleanup'
+TimeoutStartSec=0
+
+[Install]
+WantedBy=multi-user.target

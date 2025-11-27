@@ -85,7 +85,8 @@ class SecurityEngine:
         normalized = payload.lower()
         try:
             normalized = urllib.parse.unquote(normalized)
-        except:
+        except Exception:
+            # If unquoting fails, continue with original normalized value
             pass
         return normalized
     

@@ -1,0 +1,229 @@
+#!/bin/bash
+# nexaForge - Custom command for Infinite AI Security Platform
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+function print_header() {
+    echo -e "${BLUE}╔══════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${BLUE}║                     nexaForge v1.0                           ║${NC}"
+    echo -e "${BLUE}║              Infinite AI Security Platform                   ║${NC}"
+    echo -e "${BLUE}╚══════════════════════════════════════════════════════════════╝${NC}"
+    echo
+}
+
+function print_status() {
+    echo -e "${BLUE}[INFO]${NC} $1"
+}
+
+function print_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
+
+function print_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+function print_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
+}
+
+function check_docker() {
+    if ! command -v docker &> /dev/null; then
+        print_error "Docker is not installed or not in PATH"
+        return 1
+    fi
+    
+    if ! docker info &> /dev/null; then
+        print_error "Docker daemon is not running"
+        return 1
+    fi
+    
+    print_success "Docker is running"
+    return 0
+}
+
+function check_containers() {
+    print_status "Checking running containers..."
+    containers=$(docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" 2>/dev/null)
+    
+    if [ -z "$containers" ]; then
+        print_error "No Docker containers are running"
+        echo
+        echo "To start the platform, run:"
+        echo "  cd /home/whale-d/Unduhan/backup/ai-p/infinite_ai_security && DATABASE_URL=postgresql://admin:admin@localhost:9005/ai_security make up"
+        return 1
+    else
+        echo "$containers"
+        return 0
+    fi
+}
+
+function check_port() {
+    local port=$1
+    local service=$2
+    
+    if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1; then
+        print_success "$service is running on port $port"
+        return 0
+    else
+        print_warning "$service is not running on port $port"
+        return 1
+    fi
+}
+
+function list_services() {
+    echo
+    echo -e "${BLUE}[SERVICES]${NC} Available ports and services:"
+    echo "----------------------------------------"
+    check_port 9000 "API Gateway" # From docker-compose ports
+    check_port 9001 "AI Hub"      # From docker-compose ports
+    check_port 9002 "Scanner"     # From docker-compose ports
+    check_port 9005 "PostgreSQL"  # From docker-compose ports
+    check_port 9006 "Redis"       # From docker-compose ports
+    check_port 9004 "N8N"         # From docker-compose ports
+    echo
+}
+
+function show_help() {
+    echo "Usage: nexaForge [COMMAND]"
+    echo
+    echo "Commands:"
+    echo "  status     - Show status of all services"
+    echo "  start      - Start all services"
+    echo "  stop       - Stop all services"
+    echo "  restart    - Restart all services"
+    echo "  logs       - Show logs from all services"
+    echo "  migrate    - Run database migrations"
+    echo "  ps         - Show running containers"
+    echo "  config     - Show current configuration"
+    echo "  help       - Show this help message"
+    echo
+    echo "Example:"
+    echo "  nexaForge status"
+    echo "  nexaForge start"
+}
+
+function start_services() {
+    print_status "Starting Infinite AI Security Platform..."
+    PROJECT_DIR="/home/whale-d/Unduhan/backup/ai-p/infinite_ai_security"
+    cd "$PROJECT_DIR"
+    DATABASE_URL=postgresql://admin:admin@localhost:9005/ai_security make up
+    if [ $? -eq 0 ]; then
+        print_success "Services started successfully"
+        echo
+        echo "Wait a few seconds for services to be fully ready..."
+        sleep 10
+        check_containers
+    else
+        print_error "Failed to start services"
+        echo "Check Docker connection and try again"
+    fi
+}
+
+function stop_services() {
+    print_status "Stopping Infinite AI Security Platform..."
+    PROJECT_DIR="/home/whale-d/Unduhan/backup/ai-p/infinite_ai_security"
+    cd "$PROJECT_DIR"
+    make down
+    if [ $? -eq 0 ]; then
+        print_success "Services stopped successfully"
+    else
+        print_error "Failed to stop services"
+    fi
+}
+
+function show_logs() {
+    print_status "Showing logs for all containers..."
+    PROJECT_DIR="/home/whale-d/Unduhan/backup/ai-p/infinite_ai_security"
+    cd "$PROJECT_DIR"
+    make logs
+}
+
+function run_migrations() {
+    print_status "Running database migrations..."
+    PROJECT_DIR="/home/whale-d/Unduhan/backup/ai-p/infinite_ai_security"
+    cd "$PROJECT_DIR"
+    unset DATABASE_URL
+    DATABASE_URL=postgresql://admin:admin@localhost:9005/ai_security make db-migrate
+    if [ $? -eq 0 ]; then
+        print_success "Database migrations completed successfully"
+    else
+        print_error "Database migrations failed"
+    fi
+}
+
+function show_config() {
+    print_status "Current configuration:"
+    echo "----------------------------------------"
+    echo "Project directory: /home/whale-d/Unduhan/backup/ai-p/infinite_ai_security"
+    echo "Database: PostgreSQL (admin:admin@localhost:9005/ai_security)"
+    echo "Main services ports: 9000-9006"
+    echo "Virtual environment: .venv"
+    echo "----------------------------------------"
+}
+
+function main() {
+    if [ $# -eq 0 ]; then
+        print_header
+        show_help
+        exit 0
+    fi
+
+    case $1 in
+        "status")
+            print_header
+            if check_docker; then
+                check_containers
+                list_services
+            fi
+            ;;
+        "start")
+            print_header
+            start_services
+            ;;
+        "stop")
+            print_header
+            stop_services
+            ;;
+        "restart")
+            print_header
+            print_status "Restarting services..."
+            stop_services
+            sleep 2
+            start_services
+            ;;
+        "logs")
+            print_header
+            show_logs
+            ;;
+        "migrate")
+            print_header
+            run_migrations
+            ;;
+        "ps")
+            print_header
+            check_containers
+            ;;
+        "config")
+            print_header
+            show_config
+            ;;
+        "help"|"-h"|"--help")
+            print_header
+            show_help
+            ;;
+        *)
+            print_error "Unknown command: $1"
+            echo
+            show_help
+            ;;
+    esac
+}
+
+# Execute main function with all arguments
+main "$@"

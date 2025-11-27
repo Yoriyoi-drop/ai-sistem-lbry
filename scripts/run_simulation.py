@@ -9,7 +9,7 @@ import random
 from datetime import datetime
 
 class SecuritySimulation:
-    def __init__(self, api_base="http://localhost:8000"):
+    def __init__(self, api_base="http://172.18.0.1:3000"):
         self.api_base = api_base
         
     async def simulate_attack(self, attack_type: str):

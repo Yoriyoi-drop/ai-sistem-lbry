@@ -11,14 +11,29 @@ venv/
 dist/
 build/
 *.egg
+*.pyc
+*.pyo
+.Python
+idlemain.log
+*.sublime-project
+*.sublime-workspace
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 
-# Node
+# Node.js
 node_modules/
 npm-debug.log
 yarn-error.log
 .next/
 out/
 dist/
+.nuxt/
+.nyc_output/
+coverage/
+logs/
 
 # Go
 *.exe
@@ -34,43 +49,88 @@ vendor/
 target/
 Cargo.lock
 
-# IDEs
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
+# Database
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
 
 # Environment
 .env
 .env.local
 .env.*.local
-
-# OS
-.DS_Store
-Thumbs.db
+.env.production
+.env.backup
 
 # Logs
 logs/
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# Database
-*.db
-*.sqlite
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# IDE
+.vs/
+*.tmproj
+*.sw?
+*~.nib
+*.pidb
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.VC.db
+*.VC.VC.opendb
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.cov/
+coverage.xml
+*.cover
+.hypothesis/
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# Backup
+backup/
+backup_*/
+archive/
+*.bak
+*.backup
 
 # Secrets
 secrets/
 *.pem
 *.key
+*.cert
+*.crt
+*.p12
+*.pfx
 
-# Docker
-docker-compose.override.yml
-
-# Backup
-backup_old_structure/
-archive/
-
-# Temporary
-temp/
+# Development
 tmp/
-uploads/
+temp/
+.DS_Store
+Thumbs.db
+
+# Alembic
+alembic_version/
+
+# Security
+comprehensive_security_report.json
+security_report.json
+security_simple.json

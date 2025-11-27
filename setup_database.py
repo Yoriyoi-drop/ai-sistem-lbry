@@ -45,9 +45,13 @@ def setup_database():
         
         if not exists:
             # Create the database
-            # Note: Can't use parameters for database names, so we'll format the string
-            # In production, ensure db_name is properly validated to prevent injection
-            cur.execute(f"CREATE DATABASE {db_name}")
+            # Validate database name to prevent SQL injection
+            if not db_name.replace('_', '').replace('-', '').replace('.', '').isalnum():
+                raise ValueError("Invalid database name. Only alphanumeric characters, hyphens, underscores, and periods are allowed.")
+            # Using string formatting is necessary for database names, but we validate the input
+            # Escape the database name with double quotes to prevent injection
+            safe_db_name = f'"{db_name}"'
+            cur.execute(f"CREATE DATABASE {safe_db_name}")
             print(f"Database '{db_name}' created successfully")
         else:
             print(f"Info: Database '{db_name}' already exists")

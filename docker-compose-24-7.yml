@@ -1,0 +1,281 @@
+version: '3.9'
+
+services:
+  # AI-1: AstraMind (Security Strategist)
+  ai1-astramind:
+    build: .
+    container_name: astramind
+    restart: always
+    environment:
+      AI_ROLE: strategist
+      AI_NAME: AstraMind
+      ROLE_TYPE: Security Strategy & Planning Expert
+      FUNCTION_DESC: Analyzes security threats, creates security implementation plans, and coordinates high-level security strategy
+      ROLE_INSTRUCTIONS: |
+        - Break down complex security challenges into actionable steps
+        - Create structured security workflows with dependencies
+        - Assess security risks and resource requirements
+        - Provide strategic guidance to other agents for security implementations
+        - Do NOT execute security measures yourself
+      OUTPUT_FORMAT: |
+        1. Threat Analysis
+        2. Security Strategy & Plan
+        3. Resource Allocation
+        4. Expected Security Outcome
+        5. Risk Assessment
+      CONSTRAINTS: |
+        - Focus on security planning, not implementation
+        - Keep plans realistic and executable
+        - Consider system capabilities and limitations
+        - Coordinate with NexaFlow for routing
+    ports:
+      - "8001:8000"
+    networks:
+      - ai-security-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # AI-2: SpectraLogic (Security Analyzer)
+  ai2-spectralogic:
+    build: .
+    container_name: spectralogic
+    restart: always
+    environment:
+      AI_ROLE: analyzer
+      AI_NAME: SpectraLogic
+      ROLE_TYPE: Security Analysis & Vulnerability Assessment Expert
+      FUNCTION_DESC: Validates security implementations, identifies vulnerabilities, ensures security quality and precision
+      ROLE_INSTRUCTIONS: |
+        - Review all security outputs from other agents
+        - Identify security errors, bugs, and vulnerabilities
+        - Verify security logic and accuracy
+        - Test security edge cases and scenarios
+        - Provide constructive security feedback
+      OUTPUT_FORMAT: |
+        1. Security Analysis Summary
+        2. Findings (by severity)
+        3. Security Score (1-10)
+        4. Recommendations
+        5. Status: PASS/REVISION/FAIL
+      CONSTRAINTS: |
+        - Analyze security, don't create implementations
+        - Be critical but constructive
+        - Focus on security quality over speed
+        - Provide evidence-based feedback
+    ports:
+      - "8002:8000"
+    networks:
+      - ai-security-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # AI-3: ForgeRun (Security Executor)
+  ai3-forgerun:
+    build: .
+    container_name: forgerun
+    restart: always
+    environment:
+      AI_ROLE: executor
+      AI_NAME: ForgeRun
+      ROLE_TYPE: Security Implementation & Execution Specialist
+      FUNCTION_DESC: Executes security tasks, implements security measures, writes security code, processes security data
+      ROLE_INSTRUCTIONS: |
+        - Execute security tasks assigned by AstraMind
+        - Write secure code, implement security measures, transform security data
+        - Implement security solutions based on specifications
+        - Test and verify your security outputs
+        - Work efficiently and deliver secure results
+      OUTPUT_FORMAT: |
+        1. Security Task Confirmation
+        2. Approach & Method
+        3. Implementation (secure code/measures)
+        4. Security Testing Notes
+        5. Status: COMPLETED/IN_PROGRESS/BLOCKED
+      CONSTRAINTS: |
+        - Focus on security execution, not planning
+        - Follow security specifications precisely
+        - Deliver tested, secure outputs
+        - Ask for clarification if needed
+    ports:
+      - "8003:8000"
+    networks:
+      - ai-security-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # AI-4: GuardianOS (Security Validator)
+  ai4-guardianos:
+    build: .
+    container_name: guardianos
+    restart: always
+    environment:
+      AI_ROLE: validator
+      AI_NAME: GuardianOS
+      ROLE_TYPE: Security Compliance & System Validator Expert
+      FUNCTION_DESC: Validates security compliance, ensures system integrity, and monitors security standards
+    ports:
+      - "8004:8000"
+    networks:
+      - ai-security-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: infinite-ai-db
+    restart: always
+    environment:
+      - POSTGRES_DB=infinite_security
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-securepassword123}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - ai-security-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: infinite-ai-redis
+    restart: always
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redispassword123}
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - ai-security-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redispassword123}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: infinite-ai-nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - api
+    networks:
+      - ai-security-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Main FastAPI Application
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.production
+    container_name: infinite-ai-api
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD:-securepassword123}@db:5432/infinite_security
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-redispassword123}@redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./logs:/app/logs
+      - ./uploads:/app/uploads
+    networks:
+      - ai-security-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Prometheus Monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: infinite-ai-prometheus
+    restart: always
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+    networks:
+      - ai-security-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Grafana Dashboard
+  grafana:
+    image: grafana/grafana:latest
+    container_name: infinite-ai-grafana
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin123}
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel,grafana-worldmap-panel
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    networks:
+      - ai-security-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  ai-security-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  prometheus_data:
+  grafana_data:

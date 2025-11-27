@@ -195,7 +195,7 @@ def start_system():
         print("=" * 60)
         
         # Start the application
-        os.system(f"python {main_file}")
+        subprocess.run([sys.executable, main_file], check=True)
         
         return True
         
@@ -218,7 +218,7 @@ def run_tests():
             
             choice = input("\n  Run tests now? (y/N): ").lower().strip()
             if choice == 'y':
-                os.system("python testing/security_test_suite.py")
+                subprocess.run([sys.executable, "testing/security_test_suite.py"], check=True)
             else:
                 print("  ℹ️  Tests skipped. Run manually with:")
                 print("     python testing/security_test_suite.py")

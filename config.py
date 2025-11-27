@@ -1,195 +1,139 @@
-# Infinite AI Security Platform V2.0
-# Centralized Configuration
-
 """
-Centralized configuration management for the application.
-All settings are loaded from environment variables with sensible defaults.
+Configuration management for Python services
 """
-
 import os
-from typing import List, Optional
-from pydantic import BaseSettings, validator, Field
-from functools import lru_cache
+from typing import Optional
+from pydantic import BaseSettings, Field
 
 
 class Settings(BaseSettings):
-    """Application settings with validation"""
-    
-    # ===== APPLICATION =====
-    APP_NAME: str = "Infinite AI Security Platform"
-    APP_VERSION: str = "2.0.0"
-    ENVIRONMENT: str = Field(default="development", env="ENVIRONMENT")
-    DEBUG: bool = Field(default=False, env="DEBUG")
-    
-    # ===== SERVER =====
-    HOST: str = Field(default="0.0.0.0", env="HOST")
-    PORT: int = Field(default=8000, env="PORT")
-    WORKERS: int = Field(default=4, env="WORKERS")
-    RELOAD: bool = Field(default=False, env="RELOAD")
-    
-    # ===== SECURITY - SECRETS =====
-    JWT_SECRET_KEY: str = Field(..., env="JWT_SECRET_KEY")
-    JWT_REFRESH_SECRET: str = Field(..., env="JWT_REFRESH_SECRET")
-    SESSION_SECRET: str = Field(..., env="SESSION_SECRET")
-    API_SECRET_KEY: str = Field(..., env="API_SECRET_KEY")
-    
-    # ===== SECURITY - JWT =====
-    JWT_ALGORITHM: str = Field(default="HS256", env="JWT_ALGORITHM")
-    JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=15, env="JWT_ACCESS_TOKEN_EXPIRE_MINUTES")
-    JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = Field(default=7, env="JWT_REFRESH_TOKEN_EXPIRE_DAYS")
-    
-    # ===== SECURITY - SESSION =====
-    SESSION_MAX_AGE: int = Field(default=1800, env="SESSION_MAX_AGE")  # 30 minutes
-    SESSION_HTTPS_ONLY: bool = Field(default=False, env="SESSION_HTTPS_ONLY")
-    SESSION_SAME_SITE: str = Field(default="strict", env="SESSION_SAME_SITE")
-    
-    # ===== SECURITY - CSRF =====
-    CSRF_TOKEN_EXPIRE_SECONDS: int = Field(default=300, env="CSRF_TOKEN_EXPIRE_SECONDS")  # 5 minutes
-    
-    # ===== SECURITY - RATE LIMITING =====
-    RATE_LIMIT_ENABLED: bool = Field(default=True, env="RATE_LIMIT_ENABLED")
-    RATE_LIMIT_PER_MINUTE: int = Field(default=60, env="RATE_LIMIT_PER_MINUTE")
-    RATE_LIMIT_LOGIN_PER_HOUR: int = Field(default=5, env="RATE_LIMIT_LOGIN_PER_HOUR")
-    
-    # ===== DATABASE =====
-    DB_BACKEND: str = Field(default="sqlite", env="DB_BACKEND")  # sqlite or postgres
-    DATABASE_URL: Optional[str] = Field(default=None, env="DATABASE_URL")
-    
-    # PostgreSQL
-    PG_HOST: str = Field(default="127.0.0.1", env="PG_HOST")
-    PG_PORT: int = Field(default=5432, env="PG_PORT")
-    PG_USER: str = Field(default="postgres", env="PG_USER")
-    PG_PASSWORD: str = Field(default="postgres", env="PG_PASSWORD")
-    PG_DATABASE: str = Field(default="infinite_ai", env="PG_DATABASE")
-    
-    # SQLite
-    SQLITE_DB_PATH: str = Field(default="infinite_security_v2.db", env="SQLITE_DB_PATH")
-    
-    # Connection Pool
-    DB_POOL_SIZE: int = Field(default=20, env="DB_POOL_SIZE")
-    DB_MAX_OVERFLOW: int = Field(default=10, env="DB_MAX_OVERFLOW")
-    
-    # ===== REDIS =====
-    REDIS_ENABLED: bool = Field(default=False, env="REDIS_ENABLED")
-    REDIS_URL: str = Field(default="redis://localhost:6379/0", env="REDIS_URL")
-    REDIS_PASSWORD: Optional[str] = Field(default=None, env="REDIS_PASSWORD")
-    
-    # ===== CORS =====
-    ALLOWED_ORIGINS: List[str] = Field(
-        default=["http://localhost:3000", "http://127.0.0.1:3000"],
-        env="ALLOWED_ORIGINS"
-    )
-    ALLOWED_METHODS: List[str] = Field(
-        default=["GET", "POST", "PUT", "DELETE"],
-        env="ALLOWED_METHODS"
-    )
-    ALLOWED_HEADERS: List[str] = Field(
-        default=["Authorization", "Content-Type", "X-CSRF-Token"],
-        env="ALLOWED_HEADERS"
-    )
-    
-    # ===== LOGGING =====
-    LOG_LEVEL: str = Field(default="INFO", env="LOG_LEVEL")
-    LOG_FORMAT: str = Field(default="json", env="LOG_FORMAT")  # json or text
-    LOG_DIR: str = Field(default="logs", env="LOG_DIR")
-    LOG_MAX_SIZE: int = Field(default=10485760, env="LOG_MAX_SIZE")  # 10MB
-    LOG_BACKUP_COUNT: int = Field(default=10, env="LOG_BACKUP_COUNT")
-    
-    # ===== MONITORING =====
-    METRICS_ENABLED: bool = Field(default=True, env="METRICS_ENABLED")
-    PROMETHEUS_PORT: int = Field(default=9090, env="PROMETHEUS_PORT")
-    SENTRY_DSN: Optional[str] = Field(default=None, env="SENTRY_DSN")
-    
-    # ===== BACKUP =====
-    BACKUP_ENABLED: bool = Field(default=True, env="BACKUP_ENABLED")
-    BACKUP_DIR: str = Field(default="backups", env="BACKUP_DIR")
-    BACKUP_RETENTION_DAYS: int = Field(default=30, env="BACKUP_RETENTION_DAYS")
-    BACKUP_INTERVAL_HOURS: int = Field(default=24, env="BACKUP_INTERVAL_HOURS")
-    
-    # ===== EMAIL (Optional) =====
-    SMTP_ENABLED: bool = Field(default=False, env="SMTP_ENABLED")
-    SMTP_HOST: Optional[str] = Field(default=None, env="SMTP_HOST")
-    SMTP_PORT: int = Field(default=587, env="SMTP_PORT")
-    SMTP_USER: Optional[str] = Field(default=None, env="SMTP_USER")
-    SMTP_PASSWORD: Optional[str] = Field(default=None, env="SMTP_PASSWORD")
-    SMTP_FROM: Optional[str] = Field(default=None, env="SMTP_FROM")
-    
-    # ===== FEATURES =====
-    ENABLE_MFA: bool = Field(default=True, env="ENABLE_MFA")
-    ENABLE_WEBSOCKET: bool = Field(default=True, env="ENABLE_WEBSOCKET")
-    ENABLE_SWAGGER: bool = Field(default=True, env="ENABLE_SWAGGER")
-    
-    @validator("ALLOWED_ORIGINS", pre=True)
-    def parse_cors_origins(cls, v):
-        if isinstance(v, str):
-            return [origin.strip() for origin in v.split(",")]
-        return v
-    
-    @validator("ENVIRONMENT")
-    def validate_environment(cls, v):
-        allowed = ["development", "staging", "production", "testing"]
-        if v not in allowed:
-            raise ValueError(f"ENVIRONMENT must be one of {allowed}")
-        return v
-    
-    @validator("JWT_SECRET_KEY", "JWT_REFRESH_SECRET", "SESSION_SECRET", "API_SECRET_KEY")
-    def validate_secrets(cls, v, field):
-        if not v or len(v) < 32:
-            raise ValueError(f"{field.name} must be at least 32 characters long")
-        if v.startswith("CHANGE_ME"):
-            raise ValueError(f"{field.name} must be changed from default value")
-        return v
-    
-    @property
-    def is_production(self) -> bool:
-        """Check if running in production"""
-        return self.ENVIRONMENT == "production"
-    
-    @property
-    def is_development(self) -> bool:
-        """Check if running in development"""
-        return self.ENVIRONMENT == "development"
-    
-    @property
-    def database_url_computed(self) -> str:
-        """Get computed database URL"""
-        if self.DATABASE_URL:
-            return self.DATABASE_URL
-        
-        if self.DB_BACKEND == "postgres":
-            return f"postgresql://{self.PG_USER}:{self.PG_PASSWORD}@{self.PG_HOST}:{self.PG_PORT}/{self.PG_DATABASE}"
-        else:
-            return f"sqlite:///{self.SQLITE_DB_PATH}"
-    
+    # API Configuration
+    api_host: str = os.getenv("API_HOST", "0.0.0.0")
+    api_port: int = int(os.getenv("API_PORT", "8000"))
+    api_secret_key: str = os.getenv("API_SECRET_KEY")  # No default value to force environment variable
+    api_debug: bool = os.getenv("API_DEBUG", "false").lower() == "true"
+    api_workers: int = int(os.getenv("API_WORKERS", "1"))
+    api_version: str = os.getenv("API_VERSION", "v1")
+
+    # Database Configuration
+    database_url: str = os.getenv("DATABASE_URL", "postgresql://user:password@localhost:5432/infinite_ai_security")
+    database_pool_size: int = int(os.getenv("DATABASE_POOL_SIZE", "20"))
+    database_max_overflow: int = int(os.getenv("DATABASE_MAX_OVERFLOW", "10"))
+    database_echo: bool = os.getenv("DATABASE_ECHO", "false").lower() == "true"
+
+    # Redis Configuration
+    redis_url: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+    redis_password: Optional[str] = os.getenv("REDIS_PASSWORD")
+    redis_host: str = os.getenv("REDIS_HOST", "localhost")
+    redis_port: int = int(os.getenv("REDIS_PORT", "6379"))
+    redis_db: int = int(os.getenv("REDIS_DB", "0"))
+
+    # Authentication Configuration
+    jwt_secret_key: str = os.getenv("JWT_SECRET_KEY")  # No default value to force environment variable
+    jwt_algorithm: str = os.getenv("JWT_ALGORITHM", "HS256")
+    jwt_access_token_expire_minutes: int = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
+    jwt_refresh_token_expire_minutes: int = int(os.getenv("JWT_REFRESH_TOKEN_EXPIRE_MINUTES", "43200"))
+    password_hash_algorithm: str = os.getenv("PASSWORD_HASH_ALGORITHM", "bcrypt")
+    password_min_length: int = int(os.getenv("PASSWORD_MIN_LENGTH", "8"))
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # Validate critical configuration values
+        if not self.api_secret_key:
+            raise ValueError("API_SECRET_KEY environment variable must be set")
+        if not self.jwt_secret_key:
+            raise ValueError("JWT_SECRET_KEY environment variable must be set")
+
+    # AI Services Configuration
+    openai_api_key: Optional[str] = os.getenv("OPENAI_API_KEY")
+    anthropic_api_key: Optional[str] = os.getenv("ANTHROPIC_API_KEY")
+    google_api_key: Optional[str] = os.getenv("GOOGLE_API_KEY")
+
+    # Security Configuration
+    cors_origins: list = Field(default_factory=lambda: os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:8000").split(","))
+    security_password_min_length: int = int(os.getenv("SECURITY_PASSWORD_MIN_LENGTH", "8"))
+    security_password_require_symbol: bool = os.getenv("SECURITY_PASSWORD_REQUIRE_SYMBOL", "false").lower() == "true"
+    security_password_require_number: bool = os.getenv("SECURITY_PASSWORD_REQUIRE_NUMBER", "true").lower() == "true"
+    security_password_require_uppercase: bool = os.getenv("SECURITY_PASSWORD_REQUIRE_UPPERCASE", "true").lower() == "true"
+    security_password_require_lowercase: bool = os.getenv("SECURITY_PASSWORD_REQUIRE_LOWERCASE", "true").lower() == "true"
+
+    # Rate Limiting
+    rate_limit_default: int = int(os.getenv("RATE_LIMIT_DEFAULT", "100"))
+    rate_limit_window: int = int(os.getenv("RATE_LIMIT_WINDOW", "3600"))
+
+    # Logging
+    log_level: str = os.getenv("LOG_LEVEL", "INFO")
+    log_file: str = os.getenv("LOG_FILE", "logs/app.log")
+    log_format: str = os.getenv("LOG_FORMAT", "%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+
+    # File Upload
+    max_upload_size: int = int(os.getenv("MAX_UPLOAD_SIZE", "10485760"))
+    allowed_file_extensions: list = Field(default_factory=lambda: os.getenv("ALLOWED_FILE_EXTENSIONS", "txt,pdf,py,js,go,rs,ts,tsx,jsx,json,yml,yaml").split(","))
+    upload_dir: str = os.getenv("UPLOAD_DIR", "uploads/")
+
+    # External Services
+    github_token: Optional[str] = os.getenv("GITHUB_TOKEN")
+    slack_webhook_url: Optional[str] = os.getenv("SLACK_WEBHOOK_URL")
+    discord_webhook_url: Optional[str] = os.getenv("DISCORD_WEBHOOK_URL")
+
+    # Sentry (Error Tracking)
+    sentry_dsn: Optional[str] = os.getenv("SENTRY_DSN")
+
+    # Email Configuration
+    email_host: str = os.getenv("EMAIL_HOST", "smtp.gmail.com")
+    email_port: int = int(os.getenv("EMAIL_PORT", "587"))
+    email_username: Optional[str] = os.getenv("EMAIL_USERNAME")
+    email_password: Optional[str] = os.getenv("EMAIL_PASSWORD")
+    email_from: Optional[str] = os.getenv("EMAIL_FROM")
+
+    # Monitoring
+    prometheus_enabled: bool = os.getenv("PROMETHEUS_ENABLED", "true").lower() == "true"
+    grafana_url: str = os.getenv("GRAFANA_URL", "http://localhost:3000")
+    metrics_enabled: bool = os.getenv("METRICS_ENABLED", "true").lower() == "true"
+
+    # Feature Flags
+    enable_ai_agents: bool = os.getenv("ENABLE_AI_AGENTS", "true").lower() == "true"
+    enable_security_scanner: bool = os.getenv("ENABLE_SECURITY_SCANNER", "true").lower() == "true"
+    enable_labyrinth: bool = os.getenv("ENABLE_LABYRINTH", "true").lower() == "true"
+    enable_huggingface: bool = os.getenv("ENABLE_HUGGINGFACE", "false").lower() == "true"
+    enable_real_time_updates: bool = os.getenv("ENABLE_REAL_TIME_UPDATES", "true").lower() == "true"
+    enable_user_registration: bool = os.getenv("ENABLE_USER_REGISTRATION", "true").lower() == "true"
+    enable_email_verification: bool = os.getenv("ENABLE_EMAIL_VERIFICATION", "true").lower() == "true"
+
+    # Hugging Face Configuration
+    hf_token: Optional[str] = os.getenv("HF_TOKEN")
+    hf_security_model: str = os.getenv("HF_SECURITY_MODEL", "microsoft/SecurityBert")
+    ai_engine_type: str = os.getenv("AI_ENGINE_TYPE", "rust")  # rust, huggingface, hf_inference
+
+    # Scanner Configuration
+    scanner_timeout: int = int(os.getenv("SCANNER_TIMEOUT", "30"))
+    scanner_max_file_size: int = int(os.getenv("SCANNER_MAX_FILE_SIZE", "5242880"))
+    scanner_supported_languages: list = Field(default_factory=lambda: os.getenv("SCANNER_SUPPORTED_LANGUAGES", "python,javascript,go,rust,typescript").split(","))
+
+    # Labyrinth Configuration
+    labyrinth_complexity: str = os.getenv("LABYRINTH_COMPLEXITY", "medium")
+    labyrinth_timeout: int = int(os.getenv("LABYRINTH_TIMEOUT", "60"))
+    labyrinth_max_depth: int = int(os.getenv("LABYRINTH_MAX_DEPTH", "100"))
+
+    # Testing Configuration
+    testing: bool = os.getenv("TESTING", "false").lower() == "true"
+    test_database_url: str = os.getenv("TEST_DATABASE_URL", "postgresql://user:password@localhost:5432/infinite_ai_security_test")
+
+    # Web3 Configuration (Optional)
+    web3_enabled: bool = os.getenv("WEB3_ENABLED", "false").lower() == "true"
+    web3_rpc_url: str = os.getenv("WEB3_RPC_URL", "https://mainnet.infura.io/v3/YOUR-PROJECT-ID")
+    web3_contract_address: str = os.getenv("WEB3_CONTRACT_ADDRESS", "0x0000000000000000000000000000000000000000")
+
+    # Subscription Service Configuration
+    stripe_secret_key: Optional[str] = os.getenv("STRIPE_SECRET_KEY")
+    stripe_publishable_key: Optional[str] = os.getenv("STRIPE_PUBLISHABLE_KEY")
+    stripe_webhook_secret: Optional[str] = os.getenv("STRIPE_WEBHOOK_SECRET")
+    subscription_enabled: bool = os.getenv("SUBSCRIPTION_ENABLED", "true").lower() == "true"
+
     class Config:
         env_file = ".env"
-        env_file_encoding = "utf-8"
         case_sensitive = True
 
 
-@lru_cache()
-def get_settings() -> Settings:
-    """
-    Get cached settings instance
-    
-    Returns:
-        Settings instance
-    """
-    return Settings()
-
-
 # Global settings instance
-settings = get_settings()
-
-
-# Validation on import
-if __name__ != "__main__":
-    try:
-        settings = get_settings()
-        print(f"✅ Configuration loaded successfully")
-        print(f"   Environment: {settings.ENVIRONMENT}")
-        print(f"   Database: {settings.DB_BACKEND}")
-        print(f"   Redis: {'Enabled' if settings.REDIS_ENABLED else 'Disabled'}")
-    except Exception as e:
-        print(f"❌ Configuration error: {e}")
-        raise
+settings = Settings()

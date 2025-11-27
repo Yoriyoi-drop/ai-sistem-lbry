@@ -1,142 +1,238 @@
 version: '3.8'
 
 services:
-  # ===== APPLICATION =====
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: infinite-ai-security
+  # AI-1: AstraMind (Security Strategist)
+  ai1-astramind:
+    build: .
+    container_name: astramind
+    environment:
+      AI_ROLE: strategist
+      AI_NAME: AstraMind
+      ROLE_TYPE: Security Strategy & Planning Expert
+      FUNCTION_DESC: Analyzes security threats, creates security implementation plans, and coordinates high-level security strategy
+      ROLE_INSTRUCTIONS: |
+        - Break down complex security challenges into actionable steps
+        - Create structured security workflows with dependencies
+        - Assess security risks and resource requirements
+        - Provide strategic guidance to other agents for security implementations
+        - Do NOT execute security measures yourself
+      OUTPUT_FORMAT: |
+        1. Threat Analysis
+        2. Security Strategy & Plan
+        3. Resource Allocation
+        4. Expected Security Outcome
+        5. Risk Assessment
+      CONSTRAINTS: |
+        - Focus on security planning, not implementation
+        - Keep plans realistic and executable
+        - Consider system capabilities and limitations
+        - Coordinate with NexaFlow for routing
+    ports:
+      - "8001:8000"
+    networks:
+      - ai-security-network
+
+  # AI-2: SpectraLogic (Security Analyzer)
+  ai2-spectralogic:
+    build: .
+    container_name: spectralogic
+    environment:
+      AI_ROLE: analyzer
+      AI_NAME: SpectraLogic
+      ROLE_TYPE: Security Analysis & Vulnerability Assessment Expert
+      FUNCTION_DESC: Validates security implementations, identifies vulnerabilities, ensures security quality and precision
+      ROLE_INSTRUCTIONS: |
+        - Review all security outputs from other agents
+        - Identify security errors, bugs, and vulnerabilities
+        - Verify security logic and accuracy
+        - Test security edge cases and scenarios
+        - Provide constructive security feedback
+      OUTPUT_FORMAT: |
+        1. Security Analysis Summary
+        2. Findings (by severity)
+        3. Security Score (1-10)
+        4. Recommendations
+        5. Status: PASS/REVISION/FAIL
+      CONSTRAINTS: |
+        - Analyze security, don't create implementations
+        - Be critical but constructive
+        - Focus on security quality over speed
+        - Provide evidence-based feedback
+    ports:
+      - "8002:8000"
+    networks:
+      - ai-security-network
+
+  # AI-3: ForgeRun (Security Executor)
+  ai3-forgerun:
+    build: .
+    container_name: forgerun
+    environment:
+      AI_ROLE: executor
+      AI_NAME: ForgeRun
+      ROLE_TYPE: Security Implementation & Execution Specialist
+      FUNCTION_DESC: Executes security tasks, implements security measures, writes security code, processes security data
+      ROLE_INSTRUCTIONS: |
+        - Execute security tasks assigned by AstraMind
+        - Write secure code, implement security measures, transform security data
+        - Implement security solutions based on specifications
+        - Test and verify your security outputs
+        - Work efficiently and deliver secure results
+      OUTPUT_FORMAT: |
+        1. Security Task Confirmation
+        2. Approach & Method
+        3. Implementation (secure code/measures)
+        4. Security Testing Notes
+        5. Status: COMPLETED/IN_PROGRESS/BLOCKED
+      CONSTRAINTS: |
+        - Focus on security execution, not planning
+        - Follow security specifications precisely
+        - Deliver tested, secure outputs
+        - Ask for clarification if needed
+    ports:
+      - "8003:8000"
+    networks:
+      - ai-security-network
+
+  # AI-4: GuardianOS (Security Validator)
+  ai4-guardianos:
+    build: .
+    container_name: guardianos
+    environment:
+      AI_ROLE: validator
+      AI_NAME: GuardianOS
+      ROLE_TYPE: Security & Compliance Validator
+      FUNCTION_DESC: Validates security implementations, checks compliance, prevents security vulnerabilities
+      ROLE_INSTRUCTIONS: |
+        - Scan for security vulnerabilities in all outputs
+        - Validate security policy compliance
+        - Check for security gaps or inappropriate content
+        - Ensure data privacy and protection
+        - Final approval before security deployment
+      OUTPUT_FORMAT: |
+        1. Validation Type
+        2. Security Assessment
+        3. Compliance Check
+        4. Risk Level: LOW/MEDIUM/HIGH/CRITICAL
+        5. Decision: APPROVED/FLAGGED/REJECTED
+      CONSTRAINTS: |
+        - Security over functionality
+        - Be strict, not lenient
+        - Reject anything with security concerns
+        - Document all security concerns clearly
+    ports:
+      - "8004:8000"
+    networks:
+      - ai-security-network
+
+  # AI-5: ChronaCore (Security Memory Manager)
+  ai5-chronacore:
+    build: .
+    container_name: chronacore
+    environment:
+      AI_ROLE: memory
+      AI_NAME: ChronaCore
+      ROLE_TYPE: Security Memory & Context Manager
+      FUNCTION_DESC: Stores security history, maintains security context, manages security knowledge base
+      ROLE_INSTRUCTIONS: |
+        - Store security conversation history and decisions
+        - Retrieve relevant past security information
+        - Maintain security context across sessions
+        - Build and update security knowledge base
+        - Provide historical security insights to other agents
+      OUTPUT_FORMAT: |
+        1. Security Context Query
+        2. Retrieved Security Data
+        3. Relevance Score (1-10)
+        4. Additional Security Context
+        5. Storage Action Taken
+      CONSTRAINTS: |
+        - Prioritize relevant security information
+        - Keep security data organized and searchable
+        - Protect sensitive security information
+        - Don't overload with unnecessary security history
+    ports:
+      - "8005:8000"
+    volumes:
+      - security-data:/app/data
+    networks:
+      - ai-security-network
+
+  # Orchestrator: NexaFlow
+  orchestrator-nexaflow:
+    build: .
+    container_name: nexaflow
+    environment:
+      AI_ROLE: orchestrator
+      AI_NAME: NexaFlow
+      ROLE_TYPE: Security Task Orchestrator & Coordinator
+      FUNCTION_DESC: Routes security tasks, manages security workflows, coordinates all security AI agents
+      ROLE_INSTRUCTIONS: |
+        - Receive and analyze security requests
+        - Route security tasks to appropriate AI agents
+        - Manage security dependencies and sequencing
+        - Monitor security progress and aggregate results
+        - Handle security errors and implement fallback strategies
+        SECURITY ROUTING LOGIC:
+        - Complex security planning → AstraMind
+        - Security analysis → SpectraLogic
+        - Security implementation → ForgeRun
+        - Security validation → GuardianOS
+        - Security memory/context → ChronaCore
+      OUTPUT_FORMAT: |
+        1. Security Request Analysis
+        2. Routing Decision
+        3. Execution Order
+        4. Status Monitoring
+        5. Final Aggregated Security Response
+      CONSTRAINTS: |
+        - Coordinate, don't dictate
+        - Make efficient security routing decisions
+        - Handle errors gracefully
+        - Ensure smooth security workflow
     ports:
       - "8000:8000"
-    environment:
-      - ENVIRONMENT=production
-      - DB_BACKEND=postgres
-      - PG_HOST=postgres
-      - PG_PORT=5432
-      - PG_USER=postgres
-      - PG_PASSWORD=${PG_PASSWORD}
-      - PG_DATABASE=infinite_ai
-      - REDIS_ENABLED=true
-      - REDIS_URL=redis://redis:6379/0
-    env_file:
-      - .env
     depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    volumes:
-      - ./logs:/app/logs
-      - ./backups:/app/backups
-      - ./session:/app/session
+      - ai1-astramind
+      - ai2-spectralogic
+      - ai3-forgerun
+      - ai4-guardianos
+      - ai5-chronacore
     networks:
-      - app-network
-    restart: unless-stopped
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+      - ai-security-network
 
-  # ===== POSTGRESQL =====
-  postgres:
-    image: postgres:16-alpine
-    container_name: infinite-ai-postgres
+  # API Gateway: GateLambda
+  gateway-gatelambda:
+    build: .
+    container_name: gatelambda
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=${PG_PASSWORD}
-      - POSTGRES_DB=infinite_ai
-      - PGDATA=/var/lib/postgresql/data/pgdata
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-    networks:
-      - app-network
-    restart: unless-stopped
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # ===== REDIS =====
-  redis:
-    image: redis:7-alpine
-    container_name: infinite-ai-redis
-    command: redis-server --appendonly yes
-    volumes:
-      - redis-data:/data
-    networks:
-      - app-network
-    restart: unless-stopped
-    healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # ===== NGINX (Optional) =====
-  nginx:
-    image: nginx:alpine
-    container_name: infinite-ai-nginx
+      AI_ROLE: gateway
+      AI_NAME: GateLambda
+      FUNCTION_DESC: Security-focused API Gateway for request handling, security, and optimization
     ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./deployment/docker/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./ssl:/etc/nginx/ssl:ro
+      - "8080:8000"
     depends_on:
-      - app
+      - orchestrator-nexaflow
     networks:
-      - app-network
-    restart: unless-stopped
+      - ai-security-network
 
-  # ===== PROMETHEUS (Optional) =====
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: infinite-ai-prometheus
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - prometheus-data:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-    networks:
-      - app-network
-    restart: unless-stopped
-
-  # ===== GRAFANA (Optional) =====
-  grafana:
-    image: grafana/grafana:latest
-    container_name: infinite-ai-grafana
-    ports:
-      - "3000:3000"
+  # Model Server: CorePulse
+  modelserver-corepulse:
+    build: .
+    container_name: corepulse
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      AI_ROLE: modelserver
+      AI_NAME: CorePulse
+      FUNCTION_DESC: Manages security-focused LLM models, load balancing, and failover
     volumes:
-      - grafana-data:/var/lib/grafana
-      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
-    depends_on:
-      - prometheus
+      - model-cache:/root/.cache/huggingface
     networks:
-      - app-network
-    restart: unless-stopped
+      - ai-security-network
 
-# ===== VOLUMES =====
 volumes:
-  postgres-data:
-    driver: local
-  redis-data:
-    driver: local
-  prometheus-data:
-    driver: local
-  grafana-data:
-    driver: local
+  security-data:
+  model-cache:
 
-# ===== NETWORKS =====
 networks:
-  app-network:
+  ai-security-network:
     driver: bridge

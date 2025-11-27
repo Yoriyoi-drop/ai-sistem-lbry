@@ -5,15 +5,17 @@ Quality Check Script - Run all quality checks
 import subprocess
 import sys
 import os
+import shlex
 from pathlib import Path
 
 def run_command(cmd, description):
     """Run command dan report hasil"""
     print(f"\n[CHECK] {description}...")
     print(f"Command: {cmd}")
-    
+
     try:
-        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        parsed_cmd = shlex.split(cmd) if isinstance(cmd, str) else cmd
+        result = subprocess.run(parsed_cmd, capture_output=True, text=True)
         
         if result.returncode == 0:
             print(f"[PASS] {description} passed")

@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  # Orchestrator: NexaFlow (akan dijalankan pertama)
+  orchestrator-nexaflow:
+    build: .
+    container_name: nexaflow
+    environment:
+      AI_ROLE: orchestrator
+      AI_NAME: NexaFlow
+      ROLE_TYPE: Security Task Orchestrator & Coordinator
+      FUNCTION_DESC: Routes security tasks, manages security workflows, coordinates all security AI agents
+    ports:
+      - "8000:8000"
+    networks:
+      - ai-security-network
+
+  # AI-1: AstraMind (Security Strategist)
+  ai1-astramind:
+    build: .
+    container_name: astramind
+    environment:
+      AI_ROLE: strategist
+      AI_NAME: AstraMind
+      ROLE_TYPE: Security Strategy & Planning Expert
+      FUNCTION_DESC: Analyzes security threats, creates security implementation plans
+    ports:
+      - "8001:8000"
+    networks:
+      - ai-security-network
+    depends_on:
+      - orchestrator-nexaflow
+
+  # AI-2: SpectraLogic (Security Analyzer)
+  ai2-spectralogic:
+    build: .
+    container_name: spectralogic
+    environment:
+      AI_ROLE: analyzer
+      AI_NAME: SpectraLogic
+      ROLE_TYPE: Security Analysis & Vulnerability Assessment Expert
+      FUNCTION_DESC: Validates security implementations, identifies vulnerabilities
+    ports:
+      - "8002:8000"
+    networks:
+      - ai-security-network
+    depends_on:
+      - orchestrator-nexaflow
+
+  # AI-3: ForgeRun (Security Executor)
+  ai3-forgerun:
+    build: .
+    container_name: forgerun
+    environment:
+      AI_ROLE: executor
+      AI_NAME: ForgeRun
+      ROLE_TYPE: Security Implementation & Execution Specialist
+      FUNCTION_DESC: Executes security tasks, implements security measures
+    ports:
+      - "8003:8000"
+    networks:
+      - ai-security-network
+    depends_on:
+      - orchestrator-nexaflow
+
+volumes:
+  security-data:
+  model-cache:
+
+networks:
+  ai-security-network:
+    driver: bridge

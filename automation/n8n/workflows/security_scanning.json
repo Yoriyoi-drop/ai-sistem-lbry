@@ -1,0 +1,423 @@
+{
+  "name": "Security Scanning Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "automation/scan-request",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "scan-request-webhook-1",
+      "name": "Scan Request Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ],
+      "webhookId": "scan-request-automation"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Validate scan request and prepare data\nconst scanRequest = $input.first().json;\n\n// Validate required fields\nif (!scanRequest.target || !scanRequest.scan_type) {\n  throw new Error('Missing required fields: target or scan_type');\n}\n\n// Prepare scan configuration\nconst scanConfig = {\n  name: scanRequest.name || `Automated Scan - ${scanRequest.target}`,\n  scan_type: scanRequest.scan_type,\n  target: scanRequest.target,\n  parameters: {\n    ...scanRequest.parameters,\n    scheduled: true,\n    automated: true,\n    priority: scanRequest.priority || 'medium',\n    schedule_time: new Date().toISOString()\n  }\n};\n\nreturn [{\n  json: {\n    ...scanConfig,\n    original_request: scanRequest\n  }\n}];"
+      },
+      "id": "validate-scan-1",
+      "name": "Validate Scan Request",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [
+        500,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.API_BASE_URL }}/api/v1/scans",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.API_TOKEN }}"
+            }
+          ]
+        },
+        "body": {
+          "name": "={{ $json.name }}",
+          "scan_type": "={{ $json.scan_type }}",
+          "target": "={{ $json.target }}",
+          "parameters": "={{ $json.parameters }}"
+        },
+        "options": {}
+      },
+      "id": "initiate-scan-1",
+      "name": "Initiate Security Scan",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        750,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Wait for scan completion and fetch results\nconst scanResponse = $input.first().json;\nconst scanId = scanResponse.id;\n\n// This is a simplified version\n// In real implementation, you'd poll or use webhooks to get results\n\nreturn [{\n  json: {\n    scan_id: scanId,\n    status: scanResponse.status,\n    target: scanResponse.target,\n    completion_time: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "get-scan-results-1",
+      "name": "Get Scan Results",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition-1",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "completed",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "scan-completed-check-1",
+      "name": "Check Scan Completed",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [
+        1250,
+        150
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.API_BASE_URL }}/api/v1/scans/{{$json.scan_id}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.API_TOKEN }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fetch-scan-details-1",
+      "name": "Fetch Scan Details",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1500,
+        150
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Analyze scan results for findings\nconst scanDetails = $input.first().json;\n\n// Count findings by severity\nconst findings = scanDetails.findings || [];\nconst critical = findings.filter(f => f.severity === 'critical').length;\nconst high = findings.filter(f => f.severity === 'high').length;\nconst medium = findings.filter(f => f.severity === 'medium').length;\nconst low = findings.filter(f => f.severity === 'low').length;\n\n// Determine if action is needed\nconst needsAction = critical > 0 || high > 0;\n\nreturn [{\n  json: {\n    ...scanDetails,\n    analysis: {\n      critical_findings: critical,\n      high_findings: high,\n      medium_findings: medium,\n      low_findings: low,\n      total_findings: findings.length,\n      needs_action: needsAction\n    }\n  }\n}];"
+      },
+      "id": "analyze-findings-1",
+      "name": "Analyze Findings",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [
+        1750,
+        150
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition-2",
+              "leftValue": "={{ $json.analysis.needs_action }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "isTrue"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "needs-action-check-1",
+      "name": "Check if Action Needed",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        150
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SLACK_WEBHOOK_URL }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "body": {
+          "text": "={{ '🔴 Security Scan Results for ' + $json.target + '\\nCritical: ' + $json.analysis.critical_findings + '\\nHigh: ' + $json.analysis.high_findings + '\\nMedium: ' + $json.analysis.medium_findings + '\\nLow: ' + $json.analysis.low_findings + '\\n\\nScan ID: ' + $json.id }}"
+        },
+        "options": {}
+      },
+      "id": "security-alert-1",
+      "name": "Send Security Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2250,
+        150
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.API_BASE_URL }}/api/v1/scans/{{$json.id}}/report",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.API_TOKEN }}"
+            }
+          ]
+        },
+        "body": {
+          "format": "pdf",
+          "recipients": [
+            "security@company.com"
+          ],
+          "findings_summary": {
+            "critical": "={{ $json.analysis.critical_findings }}",
+            "high": "={{ $json.analysis.high_findings }}",
+            "medium": "={{ $json.analysis.medium_findings }}",
+            "low": "={{ $json.analysis.low_findings }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "generate-report-1",
+      "name": "Generate Report",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Create remediation tickets\nconst findings = $json.findings || [];\nconst criticalFindings = findings.filter(f => f.severity === 'critical');\n\nconst tickets = [];\nfor (const finding of criticalFindings) {\n  tickets.push({\n    json: {\n      title: `REMEDIATION: ${finding.type} on ${$json.target}`,\n      description: finding.description,\n      priority: 'critical',\n      assignee: 'security-team',\n      tags: ['security', 'remediation', finding.type],\n      due_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours from now\n    }\n  });\n}\n\nreturn tickets;"
+      },
+      "id": "create-remediation-tickets-1",
+      "name": "Create Remediation Tickets",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [
+        2250,
+        450
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.JIRA_BASE_URL }}/rest/api/3/issue",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Basic {{ $env.JIRA_AUTH }}"
+            }
+          ]
+        },
+        "body": {
+          "fields": {
+            "project": {
+              "key": "{{ $env.JIRA_SECURITY_PROJECT }}"
+            },
+            "summary": "={{ $json.title }}",
+            "description": "={{ $json.description }}",
+            "issuetype": {
+              "name": "Task"
+            },
+            "priority": {
+              "name": "={{ $json.priority }}"
+            },
+            "labels": "={{ $json.tags }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "create-jira-ticket-1",
+      "name": "Create JIRA Ticket",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2500,
+        450
+      ]
+    }
+  ],
+  "connections": {
+    "Scan Request Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Scan Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Scan Request": {
+      "main": [
+        [
+          {
+            "node": "Initiate Security Scan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Initiate Security Scan": {
+      "main": [
+        [
+          {
+            "node": "Get Scan Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Scan Results": {
+      "main": [
+        [
+          {
+            "node": "Check Scan Completed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Scan Completed": {
+      "main": [
+        [
+          {
+            "node": "Fetch Scan Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Scan Details": {
+      "main": [
+        [
+          {
+            "node": "Analyze Findings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Findings": {
+      "main": [
+        [
+          {
+            "node": "Check if Action Needed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check if Action Needed": {
+      "main": [
+        [
+          {
+            "node": "Send Security Alert",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Generate Report",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Create Remediation Tickets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Remediation Tickets": {
+      "main": [
+        [
+          {
+            "node": "Create JIRA Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1",
+  "triggerCount": 0,
+  "tags": ["security", "scanning", "automation"]
+}

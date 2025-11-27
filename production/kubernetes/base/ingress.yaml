@@ -1,0 +1,76 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: infinite-ai-security-ingress
+  namespace: infinite-ai-security
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      add_header X-Frame-Options DENY;
+      add_header X-Content-Type-Options nosniff;
+      add_header X-XSS-Protection "1; mode=block";
+      add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+      add_header Content-Security-Policy "default-src 'self'; frame-ancestors 'none';";
+spec:
+  tls:
+  - hosts:
+    - api.infinite-ai-security.com
+    - hub.infinite-ai-security.com
+    - scanner.infinite-ai-security.com
+    - dashboard.infinite-ai-security.com
+    - n8n.infinite-ai-security.com
+    secretName: infinite-ai-security-tls
+  rules:
+  - host: api.infinite-ai-security.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: api-gateway-service
+            port:
+              number: 80
+  - host: hub.infinite-ai-security.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: ai-hub-service
+            port:
+              number: 80
+  - host: scanner.infinite-ai-security.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: scanner-go-service
+            port:
+              number: 80
+  - host: dashboard.infinite-ai-security.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: api-gateway-service
+            port:
+              number: 80
+  - host: n8n.infinite-ai-security.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: n8n-service
+            port:
+              number: 80

@@ -1,0 +1,38 @@
+[Unit]
+Description=NexaForge AI System (24/7 Non-Stop)
+Documentation=https://github.com/Yoriyoi-drop/sistem_ai
+After=docker.service network-online.target
+Requires=docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/home/whale-d/Unduhan/backup/ai-p/infinite_ai_security
+
+# Start the docker compose with absolute path (simplified version without build)
+ExecStart=/usr/bin/docker compose -f /home/whale-d/Unduhan/backup/ai-p/infinite_ai_security/docker-compose-24-7-simplified.yml up --no-log-prefix
+
+# Stop the docker compose gracefully with absolute path
+ExecStop=/usr/bin/docker compose -f /home/whale-d/Unduhan/backup/ai-p/infinite_ai_security/docker-compose-24-7-simplified.yml down
+
+# Restart policy: always restart unless user stops it
+Restart=always
+RestartSec=5s
+
+# Keep service running if it exits
+RemainAfterExit=no
+
+# Timeouts
+StartLimitInterval=60s
+StartLimitBurst=5
+TimeoutStartSec=0
+TimeoutStopSec=60
+
+# Environment
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=nexaforge
+
+[Install]
+WantedBy=multi-user.target

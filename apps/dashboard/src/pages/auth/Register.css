@@ -1,0 +1,73 @@
+/* Register Page Styles (similar to Login with adjustments) */
+
+.register-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 20px;
+}
+
+.register-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    width: 100%;
+    max-width: 480px;
+    padding: 40px 40px;
+    animation: slideUp 0.5s ease-out;
+}
+
+.register-header {
+    text-align: center;
+    margin-bottom: 28px;
+}
+
+.register-header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1a202c;
+    margin: 0 0 8px 0;
+}
+
+.register-header p {
+    color: #718096;
+    font-size: 16px;
+    margin: 0;
+}
+
+.register-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.register-form small {
+    color: #718096;
+    font-size: 12px;
+    margin-top: -4px;
+}
+
+.register-footer {
+    text-align: center;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.register-footer p {
+    color: #718096;
+    font-size: 14px;
+    margin: 0;
+}
+
+.register-footer a {
+    color: #667eea;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.register-footer a:hover {
+    text-decoration: underline;
+}

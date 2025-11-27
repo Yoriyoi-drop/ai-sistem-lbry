@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n-security-automation
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=infinite-ai-security-2025
+      - N8N_PROTOCOL=https
+      - NODE_ENV=production
+      - N8N_DIAGNOSTICS_ENABLED=false
+      - N8N_TEMPLATES_ENABLED=false
+      - N8N_SECURE_COOKIE=false
+      # API Configuration
+      - API_BASE_URL=http://api-gateway:8000
+      - API_TOKEN=your-api-token-here
+      # Notification Configuration
+      - SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+      # External System Configuration
+      - JIRA_BASE_URL=https://yourcompany.atlassian.net
+      - JIRA_AUTH=your-base64-encoded-auth
+      - JIRA_SECURITY_PROJECT=SEC
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./n8n/workflows:/home/node/workflows
+      - ./n8n/credentials:/home/node/.n8n/credentials
+    networks:
+      - security_network
+    restart: unless-stopped
+
+  # Optional: n8n database for production
+  n8n-db:
+    image: postgres:13
+    container_name: n8n-postgres
+    environment:
+      - POSTGRES_DB=n8n
+      - POSTGRES_USER=n8n
+      - POSTGRES_PASSWORD=n8n_password
+    volumes:
+      - n8n_db_data:/var/lib/postgresql/data
+    networks:
+      - security_network
+    restart: unless-stopped
+
+networks:
+  security_network:
+    driver: bridge
+
+volumes:
+  n8n_data:
+  n8n_db_data:

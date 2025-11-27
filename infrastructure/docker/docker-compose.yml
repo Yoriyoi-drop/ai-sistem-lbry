@@ -4,7 +4,7 @@ services:
   api-gateway:
     build: ../../services/api-gateway
     ports:
-      - "8030:8000"
+      - "9000:8000"
     environment:
       - AI_HUB_URL=http://ai-hub:8001
       - SCANNER_URL=http://scanner:8002
@@ -18,7 +18,7 @@ services:
   ai-hub:
     build: ../../services/ai-hub
     ports:
-      - "8031:8001"
+      - "9001:8001"
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - REDIS_URL=redis://redis:6379
@@ -28,21 +28,21 @@ services:
   scanner:
     build: ../../services/scanner-go
     ports:
-      - "8032:8002"
+      - "9002:8002"
     depends_on:
       - api-gateway
 
-  labyrinth:
-    build: ../../services/labyrinth-rust
-    ports:
-      - "8033:8003"
-    depends_on:
-      - api-gateway
+  # labyrinth:
+  #   build: ../../services/labyrinth-rust
+  #   ports:
+  #     - "9003:8003"
+  #   depends_on:
+  #     - api-gateway
 
   n8n:
     image: n8nio/n8n:latest
     ports:
-      - "5681:5678"
+      - "9004:5678"
     environment:
       - N8N_BASIC_AUTH_ACTIVE=true
       - N8N_BASIC_AUTH_USER=admin
@@ -57,7 +57,7 @@ services:
       - POSTGRES_USER=admin
       - POSTGRES_PASSWORD=admin
     ports:
-      - "5436:5432"
+      - "9005:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -69,7 +69,7 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - "6383:6379"
+      - "9006:6379"
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s

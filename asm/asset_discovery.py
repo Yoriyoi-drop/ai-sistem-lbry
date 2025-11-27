@@ -73,7 +73,8 @@ class AssetDiscovery:
                 full_domain = f"{sub}.{domain}"
                 dns.resolver.resolve(full_domain, 'A')
                 subdomains.append(full_domain)
-            except:
+            except Exception:
+                # DNS resolution failed, continue with next subdomain
                 continue
         
         return subdomains
@@ -123,7 +124,8 @@ class AssetDiscovery:
             writer.close()
             await writer.wait_closed()
             return True
-        except:
+        except Exception:
+            # Connection failed, port likely closed or filtered
             return False
     
     def _calculate_port_risk(self, port: int) -> int:
@@ -211,7 +213,7 @@ class AssetDiscovery:
         try:
             ipaddress.ip_address(target)
             is_ip = True
-        except:
+        except ValueError:
             is_ip = False
         
         if not is_ip:

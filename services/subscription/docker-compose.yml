@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  subscription-service:
+    build: 
+      context: ./services/subscription
+      dockerfile: Dockerfile
+    container_name: infinite-ai-security-subscription
+    ports:
+      - "8002:8002"
+    environment:
+      - DATABASE_URL=postgresql://user:password@postgres:5432/infinite_ai_security
+      - SUBSCRIPTION_SECRET_KEY=your-very-long-secret-key-change-in-production
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
+      - ENVIRONMENT=production
+    volumes:
+      - ./services/subscription:/app
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - security_network
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:13
+    container_name: infinite-ai-security-postgres
+    environment:
+      - POSTGRES_DB=infinite_ai_security
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - security_network
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: infinite-ai-security-redis
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - security_network
+    restart: unless-stopped
+
+networks:
+  security_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:

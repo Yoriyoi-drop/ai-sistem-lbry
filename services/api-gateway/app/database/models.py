@@ -32,6 +32,47 @@ class User(Base):
     security_scans = relationship("SecurityScan", back_populates="user", cascade="all, delete-orphan")
     api_keys = relationship("APIKey", back_populates="user", cascade="all, delete-orphan")
     usage_logs = relationship("UsageLog", back_populates="user", cascade="all, delete-orphan")
+    roles = relationship("Role", secondary="user_roles", back_populates="users")
+
+
+class Permission(Base):
+    __tablename__ = "permissions"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = Column(String(100), unique=True, nullable=False)
+    description = Column(String(255))
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    roles = relationship("Role", secondary="role_permissions", back_populates="permissions")
+
+
+class Role(Base):
+    __tablename__ = "roles"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = Column(String(50), unique=True, nullable=False)
+    description = Column(String(255))
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    users = relationship("User", secondary="user_roles", back_populates="roles")
+    permissions = relationship("Permission", secondary="role_permissions", back_populates="roles")
+
+
+# Association Tables
+class UserRole(Base):
+    __tablename__ = "user_roles"
+    
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    role_id = Column(UUID(as_uuid=True), ForeignKey("roles.id", ondelete="CASCADE"), primary_key=True)
+
+
+class RolePermission(Base):
+    __tablename__ = "role_permissions"
+    
+    role_id = Column(UUID(as_uuid=True), ForeignKey("roles.id", ondelete="CASCADE"), primary_key=True)
+    permission_id = Column(UUID(as_uuid=True), ForeignKey("permissions.id", ondelete="CASCADE"), primary_key=True)
 
 
 class Subscription(Base):

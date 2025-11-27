@@ -23,7 +23,8 @@ class WebSocketManager:
         """Send message to specific connection"""
         try:
             await websocket.send_text(message)
-        except:
+        except Exception:
+            # Connection likely closed, disconnect the websocket
             self.disconnect(websocket)
     
     async def broadcast(self, data: Dict[str, Any]):
@@ -34,7 +35,8 @@ class WebSocketManager:
         for connection in self.connections:
             try:
                 await connection.send_text(message)
-            except:
+            except Exception:
+                # Connection likely closed, mark for disconnection
                 disconnected.append(connection)
         
         # Remove disconnected clients

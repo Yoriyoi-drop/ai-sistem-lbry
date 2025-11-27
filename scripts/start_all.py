@@ -7,6 +7,7 @@ import sys
 import time
 import os
 import signal
+import shlex
 from pathlib import Path
 
 class ServiceManager:
@@ -24,11 +25,14 @@ class ServiceManager:
             full_cwd = self.root_dir
             
         try:
+            # Parse command to avoid shell=True - split on spaces but handle quoted strings
+            parsed_cmd = shlex.split(cmd) if isinstance(cmd, str) else cmd
+
             if sys.platform == "win32":
-                proc = subprocess.Popen(cmd, shell=True, cwd=full_cwd, 
+                proc = subprocess.Popen(parsed_cmd, cwd=full_cwd,
                                       creationflags=subprocess.CREATE_NEW_PROCESS_GROUP)
             else:
-                proc = subprocess.Popen(cmd, shell=True, cwd=full_cwd)
+                proc = subprocess.Popen(parsed_cmd, cwd=full_cwd)
                 
             self.processes.append((name, proc))
             print(f"✅ {name} started (PID: {proc.pid})")
@@ -51,10 +55,11 @@ class ServiceManager:
         missing = []
         for tool, cmd in deps.items():
             try:
-                subprocess.run(cmd, shell=True, check=True, 
+                parsed_cmd = shlex.split(cmd) if isinstance(cmd, str) else cmd
+                subprocess.run(parsed_cmd, check=True,
                              capture_output=True, text=True)
                 print(f"✅ {tool} available")
-            except:
+            except (subprocess.CalledProcessError, FileNotFoundError):
                 missing.append(tool)
                 print(f"❌ {tool} not found")
         
@@ -70,12 +75,12 @@ class ServiceManager:
         
         # 1. Install dependencies
         print("\n📦 Installing dependencies...")
-        subprocess.run("pip install -r requirements.txt", shell=True, cwd=self.root_dir)
+        subprocess.run([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"], cwd=self.root_dir)
         
         if (self.root_dir / "dashboard" / "node_modules").exists():
             print("✅ Node modules already installed")
         else:
-            subprocess.run("npm install", shell=True, cwd=self.root_dir / "dashboard")
+            subprocess.run(["npm", "install"], cwd=self.root_dir / "dashboard")
         
         # 2. Start Go Scanner
         self.run_service("Go Scanner", "go run scanner.go", "security_engine/scanner_go", 3)
@@ -106,7 +111,10 @@ class ServiceManager:
                 else:
                     proc.terminate()
                 print(f"✅ Stopped {name}")
-            except:
+            except (ProcessLookupError, AttributeError):
+                # Process may have already terminated or signal not available
+                print(f"✅ {name} was already stopped")
+            except Exception:
                 print(f"❌ Failed to stop {name}")
     
     def run_demo(self):
@@ -116,7 +124,7 @@ class ServiceManager:
         
         # Run simulation
         try:
-            subprocess.run("python scripts/run_simulation.py", shell=True, cwd=self.root_dir)
+            subprocess.run([sys.executable, "scripts/run_simulation.py"], cwd=self.root_dir)
             print("✅ Demo simulation completed")
         except Exception as e:
             print(f"❌ Demo failed: {e}")

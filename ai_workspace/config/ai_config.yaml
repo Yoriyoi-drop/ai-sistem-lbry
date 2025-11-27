@@ -1,0 +1,119 @@
+# AI Workspace Configuration
+# This configuration defines the workspace environment and permissions for AI operations
+
+project_root: "/home/whale-d/Unduhan/backup/ai-p/infinite_ai_security"
+workspace_dir: "/home/whale-d/Unduhan/backup/ai-p/infinite_ai_security/ai_workspace"
+
+# Allowed directories for AI to modify
+allowed_directories:
+  - "ai_workspace"
+  - "api"
+  - "app"
+  - "apps"
+  - "services"
+  - "agents"
+  - "core-rust"
+  - "scripts"
+  - "docs"
+  - "tests"
+  - "config"
+  - "shared"
+  - "sql"
+  - "src"
+  - "data"
+  - "demo"
+  - "automation"
+  - "testing"
+  - "observability"
+  - "integrations"
+  - "reverse_engineering"
+  - "security_advanced"
+  - "operations"
+  - "compliance"
+  - "enterprise"
+  - "production"
+  - "packages"
+  - "litestar_app"
+  - "server-go"
+  - "frontend"
+  - "dashboard-react"
+  - "datacenter_security"
+  - "asm"
+  - "archive"
+  - "deployment"
+
+# Restricted directories (AI cannot modify these)
+restricted_directories:
+  - ".git"
+  - "venv"
+  - ".venv"
+  - "__pycache__"
+  - "node_modules"
+  - ".pytest_cache"
+  - "ai_workspace/logs"
+
+# Allowed file extensions for AI editing
+allowed_file_extensions:
+  - ".py"
+  - ".js"
+  - ".ts"
+  - ".tsx"
+  - ".jsx"
+  - ".go"
+  - ".rs"
+  - ".json"
+  - ".yaml"
+  - ".yml"
+  - ".md"
+  - ".txt"
+  - ".html"
+  - ".css"
+  - ".scss"
+  - ".sql"
+  - ".dockerfile"
+  - "Dockerfile"
+  - ".env"
+  - ".toml"
+  - ".xml"
+  - ".ini"
+  - ".cfg"
+  - ".conf"
+
+# AI access level settings
+access_level:
+  read: true              # AI can read all files in allowed directories
+  write: true             # AI can write/modify files in allowed directories
+  execute_scripts: false  # AI cannot execute arbitrary scripts (security measure)
+  execute_code: false     # AI cannot run code directly (security measure)
+  delete_files: false     # AI cannot delete files (safety measure)
+  modify_restricted: false # AI cannot modify restricted directories
+
+# Safety features
+safety:
+  enable_file_backup: true      # Create backups before modifying files
+  backup_location: "work/backup" # Location for file backups
+  enable_change_logging: true   # Log all changes made by AI
+  log_location: "logs/ai_changes.log" # Location for change logs
+  max_file_size: 5242880        # Maximum file size AI can work with (5MB)
+  dry_run_mode: false          # If true, AI only simulates changes without applying them
+
+# API and service settings
+services:
+  api_enabled: true
+  api_url: "http://localhost:8000"
+  enable_ai_agents: true
+  ai_engine_type: "langgraph"  # rust, huggingface, hf_inference, langgraph
+  openai_compatible: false     # Set to true if using OpenAI-compatible API
+  model_name: "gpt-4"          # Default model to use
+
+# Version control settings
+version_control:
+  enable_git_integration: true
+  create_branch_for_changes: true # Create new branch for AI changes
+  branch_prefix: "ai-feature"     # Prefix for AI-created branches
+  commit_prefix: "[AI] "          # Prefix for AI commit messages
+
+# Notification settings
+notifications:
+  enable_logging: true
+  log_level: "INFO"  # DEBUG, INFO, WARNING, ERROR

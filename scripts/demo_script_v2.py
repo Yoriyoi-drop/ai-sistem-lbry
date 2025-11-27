@@ -4,7 +4,9 @@ Demo Script V2 - Modern async demo dengan Pydantic V2 validation
 """
 import asyncio
 import aiohttp
+from aiohttp import ContentTypeError
 import json
+from json import JSONDecodeError
 import time
 from datetime import datetime
 from typing import Dict, Any, List
@@ -75,7 +77,7 @@ class DemoOrchestrator:
             try:
                 data = await response.json()
                 return {"data": data, "status": "SUCCESS", "response_code": response.status}
-            except:
+            except (ContentTypeError, JSONDecodeError):
                 text = await response.text()
                 return {"data": text, "status": "SUCCESS", "response_code": response.status}
         else:

@@ -21,7 +21,7 @@ MONGO_URI = os.getenv("MONGO_URI", "")
 MONGO_DB = os.getenv("MONGO_DB", "infinite_ai")
 
 # Security Configuration
-JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "dev-secret-change-in-production")
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")  # No default to force environment variable
 API_KEY = os.getenv("API_KEY", "infinite-ai-security-2024")
 
 # AI Agents Configuration
