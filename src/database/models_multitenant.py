@@ -1,5 +1,5 @@
 """
-Database models for Infinite AI Security Platform with Multi-Tenant Support
+Updated Database models for Infinite AI Security Platform with Multi-Tenant Support
 Based on B2B SaaS transformation strategy
 """
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, ForeignKey, JSON, Float, Enum, Table, Date, DECIMAL, UUID
