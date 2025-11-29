@@ -95,15 +95,16 @@ class Settings(BaseSettings):
     enable_ai_agents: bool = os.getenv("ENABLE_AI_AGENTS", "true").lower() == "true"
     enable_security_scanner: bool = os.getenv("ENABLE_SECURITY_SCANNER", "true").lower() == "true"
     enable_labyrinth: bool = os.getenv("ENABLE_LABYRINTH", "true").lower() == "true"
-    enable_huggingface: bool = os.getenv("ENABLE_HUGGINGFACE", "false").lower() == "true"
+    enable_huggingface: bool = False  # Hugging Face support has been removed, using Ollama instead
     enable_real_time_updates: bool = os.getenv("ENABLE_REAL_TIME_UPDATES", "true").lower() == "true"
     enable_user_registration: bool = os.getenv("ENABLE_USER_REGISTRATION", "true").lower() == "true"
     enable_email_verification: bool = os.getenv("ENABLE_EMAIL_VERIFICATION", "true").lower() == "true"
 
-    # Hugging Face Configuration
-    hf_token: Optional[str] = os.getenv("HF_TOKEN")
-    hf_security_model: str = os.getenv("HF_SECURITY_MODEL", "microsoft/SecurityBert")
-    ai_engine_type: str = os.getenv("AI_ENGINE_TYPE", "rust")  # rust, huggingface, hf_inference
+    # Ollama Configuration
+    ollama_host: str = os.getenv("OLLAMA_HOST", "http://localhost:11434")
+    ollama_security_model: str = os.getenv("OLLAMA_SECURITY_MODEL", "qwen:7b-instruct")
+    ollama_timeout: int = int(os.getenv("OLLAMA_TIMEOUT", "300"))
+    ai_engine_type: str = os.getenv("AI_ENGINE_TYPE", "ollama")  # rust, ollama, openai, anthropic
 
     # Scanner Configuration
     scanner_timeout: int = int(os.getenv("SCANNER_TIMEOUT", "30"))

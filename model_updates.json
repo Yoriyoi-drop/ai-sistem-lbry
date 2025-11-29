@@ -1,0 +1,43 @@
+{
+  "models": [
+    {
+      "name": "qwen2.5:7b-instruct",
+      "description": "Primary security model",
+      "auto_update": true,
+      "critical": true,
+      "schedule": "weekly",
+      "health_check_endpoint": "/api/tags"
+    },
+    {
+      "name": "llama3.1",
+      "description": "General purpose model",
+      "auto_update": true,
+      "critical": false,
+      "schedule": "monthly",
+      "health_check_endpoint": "/api/tags"
+    },
+    {
+      "name": "mistral",
+      "description": "Fast analysis model",
+      "auto_update": true,
+      "critical": false,
+      "schedule": "monthly",
+      "health_check_endpoint": "/api/tags"
+    }
+  ],
+  "update_config": {
+    "auto_update_enabled": true,
+    "update_check_interval_seconds": 86400,
+    "model_health_check_interval_seconds": 300,
+    "backup_before_update": true,
+    "max_concurrent_updates": 1,
+    "update_window_start": "02:00",
+    "update_window_end": "04:00"
+  },
+  "self_learning_config": {
+    "feedback_monitoring_enabled": true,
+    "performance_tracking": true,
+    "adaptive_model_selection": true,
+    "continuous_improvement": true
+  }
+}

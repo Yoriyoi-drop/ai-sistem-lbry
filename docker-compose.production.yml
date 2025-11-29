@@ -1,6 +1,18 @@
 version: '3.8'
 
 services:
+  # Ollama Service for AI Models
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+    networks:
+      - infinite-network
+
   # Main FastAPI Application
   api:
     build:
@@ -12,9 +24,12 @@ services:
     environment:
       - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/infinite_security
       - REDIS_URL=redis://redis:6379/0
+      - OLLAMA_HOST=http://ollama:11434
+      - OLLAMA_SECURITY_MODEL=qwen:7b-instruct
     depends_on:
       - db
       - redis
+      - ollama
     volumes:
       - ./logs:/app/logs
       - ./uploads:/app/uploads
@@ -109,6 +124,7 @@ volumes:
   redis_data:
   prometheus_data:
   grafana_data:
+  ollama_data:
 
 networks:
   infinite-network:

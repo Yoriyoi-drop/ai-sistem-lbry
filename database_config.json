@@ -1,0 +1,64 @@
+{
+  "database_config": {
+    "postgres": {
+      "host": "localhost",
+      "port": 5432,
+      "database": "nexaforge",
+      "username": "nexaforge_user",
+      "password": "change_me_in_production",
+      "pool_size": 20,
+      "pool_timeout": 30,
+      "ssl_mode": "prefer",
+      "connection_timeout": 10
+    },
+    "mongodb": {
+      "host": "localhost",
+      "port": 27017,
+      "database": "nexaforge",
+      "username": null,
+      "password": null,
+      "connection_timeout": 10,
+      "server_selection_timeout": 30,
+      "pool_size": 10,
+      "replica_set": null
+    },
+    "redis": {
+      "host": "localhost",
+      "port": 6379,
+      "db": 0,
+      "password": null,
+      "connection_timeout": 10,
+      "max_connections": 20,
+      "socket_connect_timeout": 5,
+      "socket_timeout": 5
+    },
+    "migration_config": {
+      "enabled": true,
+      "auto_run": false,
+      "migration_path": "./migrations",
+      "backup_before_migration": true
+    },
+    "caching_config": {
+      "default_ttl_seconds": 3600,
+      "user_cache_ttl": 3600,
+      "token_cache_ttl": 1800,
+      "workflow_cache_ttl": 7200,
+      "enable_cache_warming": true,
+      "cache_warming_interval": 300
+    },
+    "backup_config": {
+      "enabled": true,
+      "schedule": "0 2 * * *",  // Daily at 2 AM
+      "retention_days": 30,
+      "backup_path": "/var/backups/nexaforge",
+      "compress_backups": true,
+      "encrypt_backups": false
+    },
+    "monitoring_config": {
+      "enable_query_logging": false,
+      "slow_query_threshold_ms": 100,
+      "connection_pool_monitoring": true,
+      "health_check_interval": 30
+    }
+  }
+}

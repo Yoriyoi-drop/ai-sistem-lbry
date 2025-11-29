@@ -2,11 +2,37 @@ import os
 import json
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from transformers import AutoTokenizer, AutoModelForCausalLM
-import torch
 import redis
 import asyncio
 from dotenv import load_dotenv
+
+# Try to import the official ollama package; if unavailable, provide a minimal
+# HTTP-based fallback that talks to the Ollama HTTP API using OLLAMA_HOST.
+try:
+    import ollama
+except Exception:
+    import requests
+
+    class _OllamaClient:
+        def __init__(self, host=None):
+            self.host = (host or os.getenv("OLLAMA_HOST", "http://localhost:11434")).rstrip('/')
+
+        def list(self):
+            """Return the JSON response from /api/models"""
+            resp = requests.get(f"{self.host}/api/models")
+            resp.raise_for_status()
+            return resp.json()
+
+        def chat(self, model, messages, options=None):
+            """Call Ollama's chat endpoint and return parsed JSON response."""
+            payload = {"model": model, "messages": messages}
+            if options:
+                payload["options"] = options
+            resp = requests.post(f"{self.host}/api/chat", json=payload, timeout=300)
+            resp.raise_for_status()
+            return resp.json()
+
+    ollama = _OllamaClient()
 
 load_dotenv()
 
@@ -15,8 +41,8 @@ app = FastAPI()
 # Konfigurasi dari environment variables
 AI_ROLE = os.getenv("AI_ROLE", "executor")
 AI_NAME = os.getenv("AI_NAME", "DefaultAI")
-MODEL_NAME = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-7B-Instruct")
-MODEL_DIR = os.getenv("MODEL_DIR", "")
+MODEL_NAME = os.getenv("MODEL_NAME", "qwen:7b-instruct")
+OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
 TEMPERATURE = float(os.getenv("TEMPERATURE", 0.3))
 MAX_TOKENS = int(os.getenv("MAX_TOKENS", 2000))
 SYSTEM_PROMPT_TEMPLATE = os.getenv("SYSTEM_PROMPT_TEMPLATE", "You are {ai_name}, a specialized AI agent.")
@@ -81,39 +107,25 @@ role_descriptions = {
     }
 }
 
-# Inisialisasi model dan tokenizer
-tokenizer = None
-model = None
-
-def load_model():
-    global tokenizer, model
+def check_model_availability():
+    """Check if the Ollama model is available"""
     try:
-        # Prefer local model directory if provided (useful when model cache is mounted into container)
-        if MODEL_DIR and os.path.isdir(MODEL_DIR):
-            print(f"Memuat model dari folder lokal: {MODEL_DIR}")
-            tokenizer = AutoTokenizer.from_pretrained(MODEL_DIR, local_files_only=True)
-            model = AutoModelForCausalLM.from_pretrained(
-                MODEL_DIR,
-                local_files_only=True,
-                torch_dtype=torch.float16,
-                device_map="auto",
-                trust_remote_code=True
-            )
+        # Test connection to Ollama
+        response = ollama.list()
+        available_models = [m['name'] for m in response['models']]
+        if MODEL_NAME in available_models:
+            print(f"Model {MODEL_NAME} is available in Ollama")
+            return True
         else:
-            print(f"Memuat model dari HF: {MODEL_NAME}")
-            tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-            model = AutoModelForCausalLM.from_pretrained(
-                MODEL_NAME,
-                torch_dtype=torch.float16,
-                device_map="auto",
-                trust_remote_code=True
-            )
-        print("Model berhasil dimuat")
+            print(f"Model {MODEL_NAME} is not available in Ollama. Available models: {available_models}")
+            return False
     except Exception as e:
-        print(f"Error saat memuat model: {e}")
+        print(f"Error checking model availability: {e}")
+        return False
 
-# Load model saat startup
-load_model()
+# Check model availability at startup
+if not check_model_availability():
+    print(f"Warning: Model {MODEL_NAME} may not be available. Please run: ollama pull {MODEL_NAME}")
 
 # Redis client untuk manajemen cache dan komunikasi antar AI
 redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
@@ -137,7 +149,7 @@ async def chat(request: MessageRequest):
     try:
         # Ambil deskripsi role berdasarkan environment variable AI_ROLE
         role_info = role_descriptions.get(AI_ROLE, role_descriptions["executor"])
-        
+
         # Format sistem prompt berdasarkan template dan role
         system_prompt = SYSTEM_PROMPT_TEMPLATE.format(
             ai_name=AI_NAME,
@@ -147,33 +159,25 @@ async def chat(request: MessageRequest):
             output_format=role_info["output_format"],
             constraints=role_info["constraints"]
         )
-        
-        # Bangun pesan input
-        input_text = f"<|system|>{system_prompt}</s><|user|>{request.message}</s>"
-        
-        # Tokenisasi input
-        inputs = tokenizer(input_text, return_tensors="pt")
-        
-        # Generate output
-        with torch.no_grad():
-            outputs = model.generate(
-                inputs.input_ids,
-                max_new_tokens=MAX_TOKENS,
-                temperature=TEMPERATURE,
-                do_sample=True,
-                pad_token_id=tokenizer.eos_token_id
-            )
-        
-        # Decode output
-        response_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
-        
-        # Ekstrak hanya bagian jawaban (setelah <|assistant|>)
-        if "<|assistant|>" in response_text:
-            response_text = response_text.split("<|assistant|>")[-1].strip()
-        else:
-            # Jika tidak ada tag assistant, ambil bagian setelah input
-            response_text = response_text[len(input_text):].strip()
-        
+
+        # Create messages for Ollama
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": request.message}
+        ]
+
+        # Generate response using Ollama
+        response = ollama.chat(
+            model=MODEL_NAME,
+            messages=messages,
+            options={
+                "temperature": TEMPERATURE,
+                "num_predict": MAX_TOKENS
+            }
+        )
+
+        response_text = response['message']['content']
+
         return {
             "response": response_text,
             "role": AI_ROLE,

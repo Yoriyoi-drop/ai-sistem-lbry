@@ -1,0 +1,67 @@
+# ===== MINIMAL REQUIREMENTS FOR INFINITE AI SECURITY PLATFORM =====
+# Production-Grade Requirements (Minimal Dependencies to Resolve Conflicts)
+# Enterprise Cybersecurity Platform with Multi-AI Agents
+
+# ===== CORE FRAMEWORK =====
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+gunicorn==21.2.0
+pydantic==2.9.2
+pydantic-settings==2.6.0
+
+# ===== SECURITY (WAJIB) =====
+cryptography==42.0.8
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+bcrypt==4.1.2
+python-multipart==0.0.6
+email-validator==2.1.0
+
+# ===== RATE LIMITING & PROTECTION =====
+slowapi==0.1.9
+redis==4.5.4
+fastapi-limiter==0.1.5
+
+# ===== DATABASE & ORM =====
+sqlalchemy==2.0.35
+alembic==1.13.1
+asyncpg==0.29.0
+psycopg2-binary==2.9.9
+pymongo==4.6.1
+
+# ===== HTTP & NETWORKING =====
+httpx==0.28.1
+aiohttp==3.9.1
+websockets==12.0
+requests==2.31.0
+
+# ===== JSON & SERIALIZATION =====
+orjson==3.9.10
+ujson==5.8.0
+
+# ===== ENVIRONMENT & CONFIG =====
+python-dotenv==1.0.0
+
+# ===== MINIMAL AI DEPENDENCIES =====
+openai==1.3.7
+anthropic==0.7.8
+groq==0.4.1
+numpy==1.25.2
+pandas==2.1.4
+scikit-learn==1.3.2
+ollama>=0.3.0
+
+# ===== CYBERSECURITY TOOLS (MINIMAL) =====
+scapy==2.5.0
+
+# ===== LOGGING & MONITORING =====
+loguru==0.7.2
+prometheus-client==0.19.0
+structlog==23.2.0
+
+# ===== ASYNC & CONCURRENCY =====
+aiofiles==23.2.1
+
+# ===== UTILITIES =====
+click==8.1.7
+rich==13.7.0

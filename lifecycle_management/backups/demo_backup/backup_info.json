@@ -1,0 +1,10 @@
+{
+  "backup_id": "demo_backup",
+  "created_at": "2025-11-27T18:59:55.703726",
+  "size_mb": 0.001132965087890625,
+  "components": [
+    "config",
+    "logs"
+  ],
+  "status": "completed"
+}

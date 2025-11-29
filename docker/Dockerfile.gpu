@@ -7,11 +7,11 @@ WORKDIR /app
 
 COPY core_requirements.txt ./
 RUN pip install --no-cache-dir -r core_requirements.txt || true
-RUN pip install --no-cache-dir uvicorn[standard] fastapi transformers accelerate bitsandbytes python-dotenv redis
+RUN pip install --no-cache-dir uvicorn[standard] fastapi ollama python-dotenv redis
 
 COPY . /app
 
-ENV HF_HOME=/root/.cache/huggingface
+ENV OLLAMA_HOST=http://host.docker.internal:11434
 ENV MODEL_DIR=""
 
 EXPOSE 8000

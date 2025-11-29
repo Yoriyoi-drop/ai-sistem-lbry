@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  infinite-ai-security:
+    build:
+      context: .
+      dockerfile: Dockerfile.nexaproge
+    image: nexaproge/infinite-ai-security:nexaproge
+    container_name: infinite-ai-security-nexaproge
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONPATH=/app/src
+      - OLLAMA_HOST=http://host.docker.internal:11434
+    volumes:
+      - ./logs:/app/logs
+      - ./uploads:/app/uploads
+      - ./temp:/app/temp
+    restart: unless-stopped
+    networks:
+      - ai-security-net
+
+  # Optional: Redis for caching and task queue
+  redis:
+    image: redis:7-alpine
+    container_name: ai-security-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - ai-security-net
+
+  # Optional: PostgreSQL for persistent storage
+  postgres:
+    image: postgres:15
+    container_name: ai-security-postgres
+    environment:
+      POSTGRES_DB: ai_security
+      POSTGRES_USER: ai_user
+      POSTGRES_PASSWORD: ai_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - ai-security-net
+
+networks:
+  ai-security-net:
+    driver: bridge
+
+volumes:
+  redis_data:
+  postgres_data:

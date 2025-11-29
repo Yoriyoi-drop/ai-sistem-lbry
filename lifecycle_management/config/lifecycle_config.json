@@ -1,0 +1,58 @@
+{
+  "auto_update": {
+    "check_interval": 3600,
+    "update_window": {
+      "start": "02:00",
+      "end": "04:00"
+    },
+    "auto_approve_updates": false,
+    "backup_before_update": true,
+    "rollback_on_failure": true,
+    "model_sources": [
+      "https://models.nexaforge.com"
+    ]
+  },
+  "backup": {
+    "retention_days": 30,
+    "backup_components": [
+      "models",
+      "database",
+      "config",
+      "logs"
+    ],
+    "backup_schedule": {
+      "enabled": true,
+      "frequency": "daily",
+      "time": "01:00"
+    }
+  },
+  "auto_healing": {
+    "enable_container_monitoring": true,
+    "enable_resource_monitoring": true,
+    "health_check_interval": 30,
+    "resource_thresholds": {
+      "cpu_percent": 85,
+      "memory_percent": 85,
+      "disk_percent": 90
+    }
+  },
+  "hot_reload": {
+    "enable": true,
+    "watch_directories": [
+      "config",
+      "workflows",
+      "models"
+    ],
+    "reload_extensions": [
+      ".py",
+      ".json",
+      ".yaml",
+      ".yml"
+    ]
+  },
+  "versioning": {
+    "max_versions_per_model": 10,
+    "version_retention_days": 90,
+    "auto_cleanup": true
+  }
+}

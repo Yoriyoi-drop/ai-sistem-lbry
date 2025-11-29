@@ -32,10 +32,10 @@ class Settings(BaseSettings):
     RELOAD: bool = Field(default=False, env="RELOAD")
 
     # ===== SECURITY - SECRETS =====
-    JWT_SECRET_KEY: str = Field(default="very-long-secret-key-for-jwt-tokens-at-least-thirty-two-characters-1234567890", env="JWT_SECRET_KEY")
-    JWT_REFRESH_SECRET: str = Field(default="very-long-secret-key-for-refresh-tokens-at-least-thirty-two-characters-0987654321", env="JWT_REFRESH_SECRET")
-    SESSION_SECRET: str = Field(default="very-long-secret-key-for-session-management-at-least-thirty-two-characters-abcdefg", env="SESSION_SECRET")
-    API_SECRET_KEY: str = Field(default="very-long-secret-key-for-api-authentication-at-least-thirty-two-characters-hijklmn", env="API_SECRET_KEY")
+    JWT_SECRET_KEY: str = Field(default=..., env="JWT_SECRET_KEY")
+    JWT_REFRESH_SECRET: str = Field(default=..., env="JWT_REFRESH_SECRET")
+    SESSION_SECRET: str = Field(default=..., env="SESSION_SECRET")
+    API_SECRET_KEY: str = Field(default=..., env="API_SECRET_KEY")
 
     # ===== SECURITY - JWT =====
     JWT_ALGORITHM: str = Field(default="HS256", env="JWT_ALGORITHM")
@@ -57,13 +57,13 @@ class Settings(BaseSettings):
 
     # ===== DATABASE =====
     DB_BACKEND: str = Field(default="postgresql", env="DB_BACKEND")  # sqlite or postgres
-    DATABASE_URL: Optional[str] = Field(default="postgresql://user:password@localhost:5432/infinite_ai_security", env="DATABASE_URL")
+    DATABASE_URL: Optional[str] = Field(default=None, env="DATABASE_URL")
 
     # PostgreSQL Configuration
     PG_HOST: str = Field(default="localhost", env="PG_HOST")
     PG_PORT: int = Field(default=5432, env="PG_PORT")
-    PG_USER: str = Field(default="postgres", env="PG_USER")
-    PG_PASSWORD: str = Field(default="postgres", env="PG_PASSWORD")
+    PG_USER: str = Field(default=..., env="PG_USER")
+    PG_PASSWORD: str = Field(default=..., env="PG_PASSWORD")
     PG_DATABASE: str = Field(default="infinite_ai_security", env="PG_DATABASE")
 
     # Connection Pool (matching .env.example)

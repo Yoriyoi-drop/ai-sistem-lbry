@@ -1,0 +1,338 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "NexaForge Platform Dashboard",
+    "tags": ["nexaforge", "ai", "monitoring"],
+    "style": "dark",
+    "timezone": "browser",
+    "refresh": "5s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "System Resources",
+        "type": "row",
+        "collapsed": false
+      },
+      {
+        "id": 2,
+        "title": "CPU Usage",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "100 - (avg by(instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+            "legendFormat": "{{instance}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Percentage",
+            "min": 0,
+            "max": 100
+          }
+        ],
+        "xaxis": {
+          "mode": "time"
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        }
+      },
+      {
+        "id": 3,
+        "title": "Memory Usage",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "(node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100",
+            "legendFormat": "{{instance}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Percentage",
+            "min": 0,
+            "max": 100
+          }
+        ],
+        "xaxis": {
+          "mode": "time"
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 0
+        }
+      },
+      {
+        "id": 4,
+        "title": "API Performance",
+        "type": "row",
+        "collapsed": false
+      },
+      {
+        "id": 5,
+        "title": "API Request Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total[5m])",
+            "legendFormat": "{{handler}}"
+          }
+        ],
+        "xaxis": {
+          "mode": "time"
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 0,
+          "y": 1
+        }
+      },
+      {
+        "id": 6,
+        "title": "API Error Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total{status=~\"5..\"}[5m])",
+            "legendFormat": "{{handler}}"
+          }
+        ],
+        "xaxis": {
+          "mode": "time"
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 8,
+          "y": 1
+        }
+      },
+      {
+        "id": 7,
+        "title": "API Latency (95th Percentile)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "{{handler}}"
+          }
+        ],
+        "xaxis": {
+          "mode": "time"
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 16,
+          "y": 1
+        }
+      },
+      {
+        "id": 8,
+        "title": "Agent System",
+        "type": "row",
+        "collapsed": false
+      },
+      {
+        "id": 9,
+        "title": "Agent Task Throughput",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(agent_tasks_total[5m])",
+            "legendFormat": "{{agent}}"
+          }
+        ],
+        "xaxis": {
+          "mode": "time"
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 2
+        }
+      },
+      {
+        "id": 10,
+        "title": "Agent Task Failures",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(agent_task_failures_total[5m])",
+            "legendFormat": "{{agent}}"
+          }
+        ],
+        "xaxis": {
+          "mode": "time"
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 2
+        }
+      },
+      {
+        "id": 11,
+        "title": "Workflow System",
+        "type": "row",
+        "collapsed": false
+      },
+      {
+        "id": 12,
+        "title": "Workflow Executions",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(workflow_executions_total[5m])",
+            "legendFormat": "{{status}}"
+          }
+        ],
+        "xaxis": {
+          "mode": "time"
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 3
+        }
+      },
+      {
+        "id": 13,
+        "title": "Workflow Failures",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(workflow_failures_total[5m])",
+            "legendFormat": "Failures"
+          }
+        ],
+        "xaxis": {
+          "mode": "time"
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 3
+        }
+      },
+      {
+        "id": 14,
+        "title": "AI/Model Metrics",
+        "type": "row",
+        "collapsed": false
+      },
+      {
+        "id": 15,
+        "title": "Model Inference Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(model_requests_total[5m])",
+            "legendFormat": "{{model}}"
+          }
+        ],
+        "xaxis": {
+          "mode": "time"
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 4
+        }
+      },
+      {
+        "id": 16,
+        "title": "Model Error Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(model_errors_total[5m]) / rate(model_requests_total[5m])",
+            "legendFormat": "{{model}}"
+          }
+        ],
+        "xaxis": {
+          "mode": "time"
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 4
+        }
+      }
+    ],
+    "templating": {
+      "list": [
+        {
+          "name": "agent",
+          "query": "label_values(agent_tasks_total, agent)",
+          "type": "query",
+          "datasource": "prometheus"
+        },
+        {
+          "name": "model",
+          "query": "label_values(model_requests_total, model)",
+          "type": "query",
+          "datasource": "prometheus"
+        }
+      ]
+    },
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "timepicker": {
+      "refresh_intervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "time_options": [
+        "5m",
+        "15m",
+        "1h",
+        "6h",
+        "12h",
+        "24h",
+        "2d",
+        "7d",
+        "30d"
+      ]
+    },
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": "-- Grafana --",
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "type": "dashboard"
+        }
+      ]
+    },
+    "schemaVersion": 14,
+    "version": 1
+  },
+  "folderId": 0,
+  "overwrite": false
+}

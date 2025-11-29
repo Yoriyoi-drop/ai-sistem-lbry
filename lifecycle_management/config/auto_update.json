@@ -1,0 +1,13 @@
+{
+  "check_interval": 3600,
+  "update_window": {
+    "start": "02:00",
+    "end": "04:00"
+  },
+  "auto_approve_updates": false,
+  "backup_before_update": true,
+  "rollback_on_failure": true,
+  "model_sources": [
+    "https://models.nexaforge.com"
+  ]
+}

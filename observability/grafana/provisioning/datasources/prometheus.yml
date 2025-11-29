@@ -9,17 +9,17 @@ datasources:
     password: ""
     user: ""
     database: ""
-    basicAuth: false
-    basicAuthUser: ""
-    basicAuthPassword: ""
-    withCredentials: false
+    basicAuth: true
+    basicAuthUser: "${GRAFANA_PROMETHEUS_USER}"
+    basicAuthPassword: "${GRAFANA_PROMETHEUS_PASSWORD}"
+    withCredentials: true
     isDefault: true
     jsonData:
       httpMethod: GET
       timeInterval: 5s
       queryTimeout: 30s
-      tlsAuth: false
-      tlsAuthWithCACert: false
+      tlsAuth: true
+      tlsAuthWithCACert: true
     secureJsonData:
       tlsCACert: ""
       tlsClientCert: ""

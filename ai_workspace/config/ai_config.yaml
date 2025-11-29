@@ -102,9 +102,9 @@ services:
   api_enabled: true
   api_url: "http://localhost:8000"
   enable_ai_agents: true
-  ai_engine_type: "langgraph"  # rust, huggingface, hf_inference, langgraph
+  ai_engine_type: "ollama"  # rust, ollama, openai, anthropic
   openai_compatible: false     # Set to true if using OpenAI-compatible API
-  model_name: "gpt-4"          # Default model to use
+  model_name: "qwen:7b-instruct"          # Default model to use
 
 # Version control settings
 version_control:

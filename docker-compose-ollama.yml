@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    # container_name dihapus agar Docker membuat nama unik berdasarkan project
+    restart: always
+    ports:
+      - "11437:11434" # Menggunakan port 11437 agar tidak bentrok
+    volumes:
+      - ollama_models_fix:/root/.ollama
+      - ollama_db_fix:/root/.ollama/data
+
+volumes:
+  ollama_models_fix:
+  ollama_db_fix:

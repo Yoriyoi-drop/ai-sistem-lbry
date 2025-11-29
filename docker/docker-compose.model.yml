@@ -1,6 +1,25 @@
 version: "3.8"
 
 services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    # Uncomment if using NVIDIA GPU
+    # environment:
+    #   - NVIDIA_VISIBLE_DEVICES=all
+
   infinite-ai-api:
     build:
       context: ..
@@ -11,23 +30,21 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - HF_HOME=/root/.cache/huggingface
-      # Optionally set MODEL_DIR to the exact folder inside the HF cache where model files live
-      - MODEL_DIR=
+      - OLLAMA_HOST=http://ollama:11434
+      - OLLAMA_SECURITY_MODEL=qwen:7b-instruct
       - AI_ROLE=executor
       - AI_NAME=InfiniteAI
+    depends_on:
+      - ollama
     volumes:
-      # Model cache volume - create with `docker volume create ai-models` and copy HF cache into it
-      - ai-models:/root/.cache/huggingface
       # Mount repo (optional, for live code updates)
       - ..:/app:ro
 
 volumes:
-  ai-models:
+  ollama_data:
     driver: local
 
 # Notes:
-# - After running the `setup-models.sh` on the host and copying the HF cache into the
-#   docker volume (see docker/README.md), you can either set MODEL_DIR to the exact
-#   model folder inside the cache or leave MODEL_DIR empty and let the service download
-#   the model from Hugging Face when needed (if network access is available).
+# - This configuration uses Ollama to provide the AI models. Make sure to pull the required model
+#   with `ollama pull qwen:7b-instruct` after starting the Ollama service.
+# - The API service connects to the Ollama service via the docker network.

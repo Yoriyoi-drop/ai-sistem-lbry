@@ -30,12 +30,15 @@ COPY requirements_production.txt .
 RUN pip install --no-cache-dir --upgrade pip
 RUN pip install --no-cache-dir -r requirements_production.txt
 
-# Copy application code
-COPY ./app /app/app
+# Copy application code to app root
+COPY . /app/
 
 # Create necessary directories
 RUN mkdir -p /app/logs /app/uploads /app/temp
 RUN chown -R appuser:appuser /app
+
+# Set working directory to project root
+WORKDIR /app
 
 # Switch to non-root user
 USER appuser
@@ -48,4 +51,4 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
 EXPOSE 8000
 
 # Run application with Gunicorn
-CMD ["gunicorn", "app.main:app", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "-b", "0.0.0.0:8000", "--access-logfile", "-", "--error-logfile", "-", "--log-level", "info"]
+CMD ["gunicorn", "api_server:app", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "-b", "0.0.0.0:8000", "--access-logfile", "-", "--error-logfile", "-", "--log-level", "info"]

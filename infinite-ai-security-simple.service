@@ -1,0 +1,17 @@
+[Unit]
+Description=Infinite AI Security with Ollama
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+User=whale-d
+Group=whale-d
+ExecStartPre=/bin/sleep 30
+ExecStart=/bin/bash -c 'cd /home/whale-d/Unduhan/backup/ai-p/infinite_ai_security && /usr/bin/docker-compose -f docker-compose.ollama.yml up -d ollama && /usr/bin/docker-compose -f docker-compose.yml up -d'
+ExecStop=/bin/bash -c 'cd /home/whale-d/Unduhan/backup/ai-p/infinite_ai_security && /usr/bin/docker-compose -f docker-compose.ollama.yml down && /usr/bin/docker-compose -f docker-compose.yml down'
+TimeoutStartSec=120
+
+[Install]
+WantedBy=multi-user.target

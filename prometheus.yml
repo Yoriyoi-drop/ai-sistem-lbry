@@ -1,0 +1,64 @@
+# Prometheus configuration for NexaForge Monitoring (L10)
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # - alertmanager:9093
+
+# Rule files
+rule_files:
+  - "nexaforge_rules.yml"
+  # - "second_rules.yml"
+
+# Scrape configurations
+scrape_configs:
+  # Monitor the nexaforge API service
+  - job_name: 'nexaforge-api'
+    static_configs:
+      - targets: ['localhost:8000']
+    metrics_path: /metrics
+    scrape_interval: 10s
+    
+  # Monitor the nexaforge agent service
+  - job_name: 'nexaforge-agent'
+    static_configs:
+      - targets: ['localhost:8080']
+    metrics_path: /metrics
+    scrape_interval: 15s
+    
+  # Monitor the node exporter (system metrics)
+  - job_name: 'node'
+    static_configs:
+      - targets: ['localhost:9100']
+    scrape_interval: 5s
+    
+  # Monitor PostgreSQL
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['localhost:9187']
+    scrape_interval: 30s
+    
+  # Monitor MongoDB
+  - job_name: 'mongodb'
+    static_configs:
+      - targets: ['localhost:9216']
+    scrape_interval: 30s
+    
+  # Monitor Redis
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['localhost:9121']
+    scrape_interval: 15s
+
+# Example for monitoring the workflow engine
+  - job_name: 'workflow-engine'
+    static_configs:
+      - targets: ['localhost:8001']
+    metrics_path: /metrics
+    scrape_interval: 20s

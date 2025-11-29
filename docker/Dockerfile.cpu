@@ -17,13 +17,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY core_requirements.txt ./
 RUN pip install --no-cache-dir -r core_requirements.txt || true
 
-# Fallback installs for running the API and transformers
-RUN pip install --no-cache-dir uvicorn[standard] fastapi transformers "torch>=2.0" python-dotenv redis accelerate
+# Install Ollama client instead of transformers
+RUN pip install --no-cache-dir uvicorn[standard] fastapi ollama python-dotenv redis
 
 # Copy project
 COPY . /app
 
-ENV HF_HOME=/root/.cache/huggingface
+ENV OLLAMA_HOST=http://host.docker.internal:11434
 ENV MODEL_DIR=""
 
 EXPOSE 8000

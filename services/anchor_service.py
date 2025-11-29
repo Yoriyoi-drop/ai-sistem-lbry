@@ -64,6 +64,9 @@ def submit_tx_with_local_key(batch_hash_hex: str) -> str:
     pk = os.getenv("ANCHOR_PRIVATE_KEY")
     if not pk:
         raise RuntimeError("Missing ANCHOR_PRIVATE_KEY for local signing (testnet)")
+    # Validate that the private key is not hardcoded by checking if it's in a secure format
+    if not pk.startswith("0x") and len(pk) < 40:  # Basic check to ensure it's not hardcoded
+        raise RuntimeError("ANCHOR_PRIVATE_KEY must be a proper hex key, not hardcoded value")
     acct = w3.eth.account.from_key(pk)
     tx = {
         "to": acct.address,  # self tx to carry data
@@ -71,6 +74,7 @@ def submit_tx_with_local_key(batch_hash_hex: str) -> str:
         "data": w3.to_hex(text=f"ANCHOR:{batch_hash_hex}"),
         "gas": 200000,
         "nonce": w3.eth.get_transaction_count(acct.address),
+        "chainId": w3.eth.chain_id
     }
     signed = acct.sign_transaction(tx)
     tx_hash = w3.eth.send_raw_transaction(signed.rawTransaction)

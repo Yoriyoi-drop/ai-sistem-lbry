@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  lifecycle-manager:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nexaforge-lifecycle-manager
+    volumes:
+      - .:/app
+      - /var/run/docker.sock:/var/run/docker.sock  # For container management
+      - ./lifecycle_management/logs:/app/lifecycle_management/logs
+      - ./lifecycle_management/backups:/app/lifecycle_management/backups
+      - ./lifecycle_management/config:/app/lifecycle_management/config
+    environment:
+      - PYTHONPATH=/app
+      - LOG_LEVEL=INFO
+    networks:
+      - nexaforge-network
+    restart: unless-stopped
+    labels:
+      - "nexaforge.layer=L13"
+      - "nexaforge.component=lifecycle-manager"
+    healthcheck:
+      test: ["CMD", "python3", "-c", "from lifecycle_management.lifecycle_manager import LifecycleManager; m = LifecycleManager(); m.shutdown()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  lifecycle-ui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nexaforge-lifecycle-ui
+    command: >
+      sh -c "cd /app/lifecycle_management && python3 -m http.server 8080"
+    volumes:
+      - ./lifecycle_management:/app/lifecycle_management
+    ports:
+      - "8080:8080"
+    environment:
+      - PYTHONPATH=/app
+    networks:
+      - nexaforge-network
+    restart: unless-stopped
+    labels:
+      - "nexaforge.layer=L13"
+      - "nexaforge.component=lifecycle-ui"
+
+networks:
+  nexaforge-network:
+    name: nexaforge-network
+    driver: bridge

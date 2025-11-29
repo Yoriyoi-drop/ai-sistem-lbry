@@ -542,7 +542,10 @@ func (s *AdvancedScanner) checkWebVulns(host string, port int) bool {
 	client := &http.Client{
 		Timeout: 5 * time.Second,
 		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: false, // Enforce certificate verification
+				MinVersion:         tls.VersionTLS12,
+			},
 		},
 	}
 	

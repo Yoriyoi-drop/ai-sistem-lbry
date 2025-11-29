@@ -1,11 +1,10 @@
-# Dockerfile untuk Multi-AI System Infinite AI Security
+# Dockerfile untuk Multi-AI System Infinite AI Security (Ollama Version)
 
 FROM python:3.11-slim
 
 # Install dependencies
 RUN pip install --no-cache-dir \
-    transformers \
-    torch \
+    ollama \
     fastapi \
     uvicorn \
     pydantic \
@@ -15,13 +14,14 @@ RUN pip install --no-cache-dir \
 
 WORKDIR /app
 
-# Copy aplikasi
-COPY . /app
+# Copy application code
+COPY . /app/
 
 # Environment variables untuk konfigurasi AI
 ENV AI_ROLE=${AI_ROLE:-executor}
 ENV AI_NAME=${AI_NAME:-DefaultAI}
-ENV MODEL_NAME="Qwen/Qwen2.5-7B-Instruct"
+ENV MODEL_NAME="qwen:7b-instruct"
+ENV OLLAMA_HOST=http://host.docker.internal:11434
 ENV TEMPERATURE=0.3
 ENV MAX_TOKENS=2000
 

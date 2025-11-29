@@ -1,0 +1,64 @@
+{
+  "security_config": {
+    "api_key_config": {
+      "default_expiration_days": 30,
+      "max_expiration_days": 365,
+      "key_length": 32,
+      "key_prefix": "nexa_",
+      "require_encryption": true
+    },
+    "access_control": {
+      "default_permissions": ["read"],
+      "admin_permissions": [
+        "admin",
+        "user_manage",
+        "model_access",
+        "workflow_create"
+      ],
+      "permission_hierarchy": {
+        "admin": ["user_manage", "model_access", "workflow_create", "read", "write", "execute"],
+        "user": ["read", "write", "execute"],
+        "guest": ["read"]
+      }
+    },
+    "encryption_config": {
+      "algorithm": "Fernet",
+      "key_rotation_days": 90,
+      "min_key_length": 32,
+      "enable_at_rest_encryption": true,
+      "enable_in_transit_encryption": true
+    },
+    "model_sandbox": {
+      "default_memory_limit_mb": 1024,
+      "default_timeout_seconds": 30,
+      "enable_network_isolation": true,
+      "enable_file_system_isolation": true,
+      "enable_gpu_isolation": true
+    },
+    "network_security": {
+      "enable_firewall": true,
+      "default_rate_limit": {
+        "requests_per_minute": 100,
+        "requests_per_hour": 5000
+      },
+      "blocked_ip_list": [],
+      "allowed_ports": [80, 443, 8000, 8080],
+      "enable_ssl": true,
+      "ssl_certificate_path": "/etc/ssl/certs/nexaforge.crt",
+      "ssl_key_path": "/etc/ssl/private/nexaforge.key"
+    },
+    "monitoring_config": {
+      "log_security_events": true,
+      "alert_on_suspicious_activity": true,
+      "security_event_retention_days": 90,
+      "failed_login_attempts_threshold": 5,
+      "lockout_duration_minutes": 15
+    },
+    "integration_config": {
+      "enable_database_encryption": true,
+      "enable_token_blacklisting": true,
+      "api_gateway_integration": true,
+      "rate_limiting_integration": true
+    }
+  }
+}

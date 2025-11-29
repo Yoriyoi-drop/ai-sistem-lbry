@@ -23,12 +23,9 @@ try:
 except ImportError:
     sklearn_available = False
 
-# Use transformers if available for more advanced NLP
-try:
-    import transformers
-    transformers_available = True
-except ImportError:
-    transformers_available = False
+# Note: Transformers library removed, using scikit-learn or rule-based approaches
+# Previously: Use transformers if available for more advanced NLP
+# import transformers  # Removed
 
 
 class NeuralSecurityDetector:

@@ -1,0 +1,69 @@
+{
+  "workflow_config": {
+    "default_timeout": 300,
+    "max_concurrent_workflows": 10,
+    "workflow_storage_path": "~/nexaforge/workflows",
+    "enable_persistence": true,
+    "persistence_interval_seconds": 30,
+    "max_workflow_depth": 100,
+    "enable_debug_logging": true,
+    "workflow_engines": {
+      "langgraph_enabled": true,
+      "n8n_enabled": true,
+      "custom_engine_enabled": true
+    }
+  },
+  "message_queue_config": {
+    "default_queue_ttl": 86400,
+    "max_message_size_kb": 1024,
+    "enable_message_persistence": true,
+    "redis_config": {
+      "host": "localhost",
+      "port": 6379,
+      "db": 0,
+      "connection_timeout": 10,
+      "retry_attempts": 3,
+      "retry_delay": 1
+    },
+    "queue_types": {
+      "agent_commands": {
+        "ttl": 3600,
+        "max_size": 1000
+      },
+      "task_results": {
+        "ttl": 7200,
+        "max_size": 5000
+      },
+      "system_events": {
+        "ttl": 1800,
+        "max_size": 10000
+      },
+      "workflow_updates": {
+        "ttl": 3600,
+        "max_size": 2000
+      }
+    }
+  },
+  "n8n_integration": {
+    "enabled": true,
+    "webhook_base_url": "http://localhost:5000/webhooks",
+    "api_timeout": 30,
+    "max_retry_attempts": 3,
+    "webhook_signature_secret": "nexaforge-webhook-secret-change-in-production",
+    "webhook_retry_delay": 5,
+    "supported_triggers": [
+      "webhook",
+      "interval",
+      "cron",
+      "manual"
+    ]
+  },
+  "integration_with_other_layers": {
+    "connect_to_agent_system": true,
+    "connect_to_ai_router": true,
+    "connect_to_database": true,
+    "agent_system_endpoint": "http://localhost:8080/api/agents",
+    "ai_router_endpoint": "http://localhost:8081/api/route",
+    "database_endpoint": "postgresql://localhost:5432/nexaforge"
+  }
+}

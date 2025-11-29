@@ -16,7 +16,7 @@ services:
     image: grafana/grafana:latest
     ports: ["3000:3000"]
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
     volumes:
       - grafana-data:/var/lib/grafana
       - ./grafana-dashboard.json:/var/lib/grafana/dashboards/mongo.json

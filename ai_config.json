@@ -1,0 +1,107 @@
+{
+  "model_config": {
+    "default_model": "Llama-3.1-70B-Instruct",
+    "default_task_type": "general",
+    "model_selection_timeout": 30,
+    "max_concurrent_models": 4,
+    "model_cache_dir": "~/nexaforge/models",
+    "model_configs": {
+      "Qwen2.5-Coder-32B-Instruct": {
+        "type": "coding",
+        "preferred_gpu_memory": "24GB",
+        "max_context": 32768,
+        "quantization": "4bit"
+      },
+      "Qwen2.5-72B": {
+        "type": "reasoning",
+        "preferred_gpu_memory": "48GB",
+        "max_context": 32768,
+        "quantization": "4bit"
+      },
+      "Llama-3.1-70B-Instruct": {
+        "type": "general",
+        "preferred_gpu_memory": "40GB",
+        "max_context": 131072,
+        "quantization": "4bit"
+      },
+      "DeepSeek-R1-70B-Distill": {
+        "type": "logic",
+        "preferred_gpu_memory": "40GB",
+        "max_context": 32768,
+        "quantization": "4bit"
+      },
+      "Phi-3.5-Vision": {
+        "type": "vision",
+        "preferred_gpu_memory": "12GB",
+        "max_context": 16384,
+        "quantization": "4bit"
+      },
+      "Qwen-Audio": {
+        "type": "audio",
+        "preferred_gpu_memory": "8GB",
+        "max_context": 16384,
+        "quantization": "4bit"
+      },
+      "Qwen2-VL": {
+        "type": "multimodal",
+        "preferred_gpu_memory": "24GB",
+        "max_context": 16384,
+        "quantization": "4bit"
+      },
+      "SmolAgent": {
+        "type": "tools",
+        "preferred_gpu_memory": "6GB",
+        "max_context": 8192,
+        "quantization": "4bit"
+      },
+      "Nous-Hermes-3": {
+        "type": "creative",
+        "preferred_gpu_memory": "40GB",
+        "max_context": 32768,
+        "quantization": "4bit"
+      },
+      "Gemma-2-27B": {
+        "type": "efficient",
+        "preferred_gpu_memory": "16GB",
+        "max_context": 8192,
+        "quantization": "4bit"
+      }
+    }
+  },
+  "routing_config": {
+    "enable_intelligent_routing": true,
+    "fallback_model": "Llama-3.1-70B-Instruct",
+    "routing_timeout": 10,
+    "enable_load_balancing": true,
+    "max_routing_attempts": 3,
+    "model_selection_algorithm": "priority_based",
+    "task_routing_rules": {
+      "coding": ["Qwen2.5-Coder-32B-Instruct", "Llama-3.1-70B-Instruct"],
+      "reasoning": ["Qwen2.5-72B", "DeepSeek-R1-70B-Distill", "Llama-3.1-70B-Instruct"],
+      "general": ["Llama-3.1-70B-Instruct", "Qwen2.5-72B", "Nous-Hermes-3"],
+      "vision": ["Phi-3.5-Vision", "Qwen2-VL"],
+      "audio": ["Qwen-Audio"],
+      "creative": ["Nous-Hermes-3", "Llama-3.1-70B-Instruct"],
+      "logic": ["DeepSeek-R1-70B-Distill", "Qwen2.5-72B"],
+      "tools": ["SmolAgent", "Llama-3.1-70B-Instruct"],
+      "multimodal": ["Qwen2-VL", "Phi-3.5-Vision"],
+      "efficient": ["Gemma-2-27B"]
+    }
+  },
+  "prompt_optimization": {
+    "enable_optimization": true,
+    "max_prompt_length": 4096,
+    "enable_compression": true,
+    "compression_ratio": 0.7,
+    "context_window_optimization": true,
+    "prompt_validation": true
+  },
+  "performance": {
+    "enable_caching": true,
+    "cache_ttl_seconds": 3600,
+    "max_cache_size_gb": 10,
+    "enable_batching": true,
+    "max_batch_size": 8,
+    "enable_streaming": true
+  }
+}

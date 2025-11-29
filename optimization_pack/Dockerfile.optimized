@@ -1,0 +1,99 @@
+# ===== OPTIMIZED MULTI-STAGE DOCKERFILE =====
+# Ultra-lightweight build with full functionality
+# Uses multi-stage build to minimize image size
+
+# ===== BUILD STAGE =====
+FROM python:3.11-slim AS builder
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install system dependencies needed for compilation
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    make \
+    libffi-dev \
+    libssl-dev \
+    libpq-dev \
+    curl \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create and switch to non-root user for build
+RUN groupadd -r builduser && useradd -r -g builduser builduser
+
+# Create working directory and set ownership
+WORKDIR /app
+
+# Copy only requirements first for better caching
+COPY requirements_production.txt .
+RUN chown -R builduser:builduser /app
+
+# Install Python dependencies in user space to reduce image size
+RUN pip install --user --no-cache-dir --upgrade pip && \
+    pip install --user --no-cache-dir -r requirements_production.txt
+
+# ===== RUNTIME STAGE =====
+FROM python:3.11-slim AS runtime
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install minimal runtime dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    libpq5 \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Create non-root application user
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+
+# Set working directory
+WORKDIR /app
+
+# Copy Python dependencies from builder stage
+COPY --from=builder --chown=appuser:appuser /root/.local /root/.local
+
+# Copy application code
+COPY --chown=appuser:appuser . /app/src/
+
+# Create necessary directories with proper permissions
+RUN mkdir -p /app/logs /app/uploads /app/data /app/cache && \
+    chown -R appuser:appuser /app
+
+# Set working directory to source
+WORKDIR /app/src
+
+# Switch to non-root user
+USER appuser
+
+# Add .local/bin to PATH for user-installed packages
+ENV PATH=/root/.local/bin:$PATH
+
+# Pre-compile Python files for faster startup
+RUN python -OO -m compileall .
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Expose port
+EXPOSE 8000
+
+# Use optimized FastAPI command with multiple workers
+CMD ["gunicorn", "api_server:app", \
+     "-w", "4", \
+     "-k", "uvicorn.workers.UvicornWorker", \
+     "-b", "0.0.0.0:8000", \
+     "--access-logfile", "-", \
+     "--error-logfile", "-", \
+     "--log-level", "info", \
+     "--keep-alive", "5", \
+     "--max-requests", "1000", \
+     "--max-requests-jitter", "100"]

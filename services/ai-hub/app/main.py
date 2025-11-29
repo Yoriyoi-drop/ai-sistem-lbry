@@ -16,7 +16,7 @@ pipeline_manager = PipelineManager()
 async def startup():
     """Initialize 200 node graph and 50 level pipeline"""
     print("🚀 Building 200 node workflow graph...")
-    await graph_builder.build_graph()
+    await graph_builder.build()
     
     print("📊 Initializing 50 level pipeline...")
     await pipeline_manager.initialize_pipeline()

@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   api-gateway:
     build: ../../services/api-gateway
@@ -14,16 +12,28 @@ services:
     depends_on:
       - redis
       - postgres
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/api/v1/health/" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   ai-hub:
     build: ../../services/ai-hub
     ports:
       - "9001:8001"
     environment:
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - REDIS_URL=redis://redis:6379
     depends_on:
       - redis
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8001/" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   scanner:
     build: ../../services/scanner-go

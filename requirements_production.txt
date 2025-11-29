@@ -10,16 +10,16 @@ pydantic==2.9.2
 pydantic-settings==2.6.0
 
 # ===== SECURITY (WAJIB) =====
+cryptography==42.0.8
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 bcrypt==4.1.2
-cryptography==41.0.8
 python-multipart==0.0.6
 email-validator==2.1.0
 
 # ===== RATE LIMITING & PROTECTION =====
 slowapi==0.1.9
-redis==5.2.0
+redis==4.5.4
 fastapi-limiter==0.1.5
 
 # ===== DATABASE & ORM =====
@@ -30,7 +30,7 @@ psycopg2-binary==2.9.9
 pymongo==4.6.1
 
 # ===== HTTP & NETWORKING =====
-httpx==0.25.2
+httpx>=0.28.1,<0.29.0
 aiohttp==3.9.1
 websockets==12.0
 requests==2.31.0
@@ -46,12 +46,10 @@ pydantic-settings==2.6.0
 openai==1.3.7
 anthropic==0.7.8
 groq==0.4.1
-mistralai==0.0.12
 numpy==1.25.2
 pandas==2.1.4
 scikit-learn==1.3.2
-torch==2.1.1
-transformers==4.36.2
+ollama>=0.3.0
 
 # ===== REVERSE ENGINEERING =====
 pefile==2023.2.7
@@ -63,7 +61,6 @@ r2pipe==1.7.4
 
 # ===== CYBERSECURITY TOOLS =====
 scapy==2.5.0
-nmap==0.0.1
 python-nmap==0.7.1
 
 # ===== LOGGING & MONITORING =====
@@ -78,7 +75,6 @@ aiodns==3.1.1
 # ===== TESTING =====
 pytest==7.4.3
 pytest-asyncio==0.21.1
-httpx==0.25.2
 faker==20.1.0
 
 # ===== DEPLOYMENT =====
@@ -110,4 +106,4 @@ cachetools==5.3.2
 memory-profiler==0.61.0
 
 # ===== COMPLIANCE & AUDIT =====
-audit-log==1.0.0
+# audit-log==1.0.0  # Tidak tersedia di PyPI, diganti dengan solusi lain jika diperlukan
