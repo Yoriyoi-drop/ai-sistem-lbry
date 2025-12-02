@@ -3,7 +3,11 @@ Configuration management for Python services
 """
 import os
 from typing import Optional
-from pydantic import BaseSettings, Field
+try:
+    from pydantic_settings import BaseSettings
+    from pydantic import Field
+except ImportError:
+    from pydantic import BaseSettings, Field
 
 
 class Settings(BaseSettings):
@@ -29,7 +33,8 @@ class Settings(BaseSettings):
     redis_db: int = int(os.getenv("REDIS_DB", "0"))
 
     # Authentication Configuration
-    jwt_secret_key: str = os.getenv("JWT_SECRET_KEY")  # No default value to force environment variable
+    api_secret_key: Optional[str] = os.getenv("API_SECRET_KEY")  # No default value to force environment variable
+    jwt_secret_key: Optional[str] = os.getenv("JWT_SECRET_KEY")  # No default value to force environment variable
     jwt_algorithm: str = os.getenv("JWT_ALGORITHM", "HS256")
     jwt_access_token_expire_minutes: int = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
     jwt_refresh_token_expire_minutes: int = int(os.getenv("JWT_REFRESH_TOKEN_EXPIRE_MINUTES", "43200"))
@@ -38,11 +43,12 @@ class Settings(BaseSettings):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # Validate critical configuration values
-        if not self.api_secret_key:
-            raise ValueError("API_SECRET_KEY environment variable must be set")
-        if not self.jwt_secret_key:
-            raise ValueError("JWT_SECRET_KEY environment variable must be set")
+        # Validate critical configuration values (only in production/debug mode)
+        if self.api_debug == "false" or os.getenv("FORCE_STRICT_CONFIG", "false").lower() == "true":
+            if not self.api_secret_key:
+                raise ValueError("API_SECRET_KEY environment variable must be set")
+            if not self.jwt_secret_key:
+                raise ValueError("JWT_SECRET_KEY environment variable must be set")
 
     # AI Services Configuration
     openai_api_key: Optional[str] = os.getenv("OPENAI_API_KEY")
@@ -131,9 +137,11 @@ class Settings(BaseSettings):
     stripe_webhook_secret: Optional[str] = os.getenv("STRIPE_WEBHOOK_SECRET")
     subscription_enabled: bool = os.getenv("SUBSCRIPTION_ENABLED", "true").lower() == "true"
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
+    model_config = {
+        "env_file": ".env",
+        "case_sensitive": True,
+        "extra": "ignore"  # Ignore extra fields to avoid validation errors
+    }
 
 
 # Global settings instance

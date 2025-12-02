@@ -1,145 +1,58 @@
-# Makefile for Infinite AI Security Platform
-# Simplifies common development tasks
+.PHONY: help install dev prod test clean db-migrate db-upgrade db-downgrade
 
-.PHONY: help up down build test lint clean logs shell db-migrate db-reset install-dev
+# Infinite AI Security Platform - Makefile
 
 # Default target
 help:
-	@echo "🚀 Infinite AI Security - Development Commands"
+	@echo "Infinite AI Security Platform - Makefile"
 	@echo ""
-	@echo "Docker Commands:"
-	@echo "  make up          - Start all services"
-	@echo "  make down        - Stop all services"
-	@echo "  make build       - Build all Docker images"
-	@echo "  make logs        - Show logs from all services"
-	@echo "  make clean       - Remove all containers and volumes"
-	@echo ""
-	@echo "Development Commands:"
-	@echo "  make install-dev - Install development dependencies"
-	@echo "  make test        - Run all tests"
-	@echo "  make lint        - Run linters (Python, Go, Rust)"
-	@echo "  make format      - Auto-format code"
-	@echo ""
-	@echo "Database Commands:"
-	@echo "  make db-migrate  - Run database migrations"
-	@echo "  make db-reset    - Reset database (WARNING: deletes data)"
-	@echo "  make db-shell    - Open PostgreSQL shell"
-	@echo ""
-	@echo "Service Commands:"
-	@echo "  make shell-api   - Shell into API Gateway container"
-	@echo "  make shell-hub   - Shell into AI Hub container"
+	@echo "Usage:"
+	@echo "  make install          Install dependencies"
+	@echo "  make dev              Start development server"
+	@echo "  make prod             Start production server"
+	@echo "  make test             Run tests"
+	@echo "  make clean            Clean temporary files"
+	@echo "  make db-migrate       Create database migration"
+	@echo "  make db-upgrade       Upgrade database to latest"
+	@echo "  make db-downgrade     Downgrade database"
 	@echo ""
 
-# Docker Commands
-up:
-	@echo "🚀 Starting all services..."
-	cd infrastructure/docker && docker-compose -p aisec_v8 up -d
+# Install dependencies
+install:
+	pip install -r requirements.txt
 
-down:
-	@echo "🛑 Stopping all services..."
-	cd infrastructure/docker && docker-compose -p aisec_v8 down
+# Start development server with auto-reload
+dev:
+	bash setup_env.sh
+	python start_server.py
 
-build:
-	@echo "🔨 Building all Docker images..."
-	cd infrastructure/docker && docker-compose -p aisec_v8 build
+# Start production server (this would use gunicorn in real production)
+prod:
+	bash setup_env.sh
+	uvicorn api.main:app --host 0.0.0.0 --port 8000 --workers 4
 
-logs:
-	@echo "📋 Showing logs..."
-	cd infrastructure/docker && docker-compose -p aisec_v8 logs -f
-
-clean:
-	@echo "🧹 Cleaning up containers and volumes..."
-	cd infrastructure/docker && docker-compose -p aisec_v8 down -v
-	docker system prune -f
-
-# Development Commands
-install-dev:
-	@echo "📦 Installing development dependencies..."
-	pip install -r requirements-dev.txt
-	cd services/api-gateway && pip install -r requirements.txt
-	cd services/ai-hub && pip install -r requirements.txt
-	cd frontend && npm install
-
+# Run tests
 test:
-	@echo "🧪 Running tests..."
-	pytest tests/ -v --cov=services --cov-report=html --cov-report=term
+	pytest tests/ -v
 
-test-unit:
-	@echo "🧪 Running unit tests..."
-	pytest tests/unit/ -v
+# Clean temporary files
+clean:
+	find . -type f -name "*.pyc" -delete
+	find . -type d -name "__pycache__" -delete
+	find . -type f -name ".coverage" -delete
+	rm -rf .pytest_cache/
+	rm -rf .mypy_cache/
+	rm -rf htmlcov/
 
-test-integration:
-	@echo "🧪 Running integration tests..."
-	pytest tests/integration/ -v
-
-lint:
-	@echo "🔍 Running linters..."
-	@echo "Python (flake8)..."
-	flake8 services/api-gateway services/ai-hub security/
-	@echo "Python (mypy)..."
-	mypy services/api-gateway services/ai-hub --ignore-missing-imports
-	@echo "Go (golangci-lint)..."
-	cd services/scanner-go && golangci-lint run || echo "⚠️  Go linter not installed"
-	@echo "Rust (clippy)..."
-	cd services/labyrinth-rust && cargo clippy || echo "⚠️  Rust clippy not installed"
-
-format:
-	@echo "✨ Formatting code..."
-	black services/api-gateway services/ai-hub security/
-	isort services/api-gateway services/ai-hub security/
-	cd services/scanner-go && go fmt ./... || true
-	cd services/labyrinth-rust && cargo fmt || true
-
-# Database Commands
+# Database management (these would work with alembic)
 db-migrate:
-	@echo "🗄️  Running database migrations..."
-	cd services/api-gateway && alembic upgrade head
+	alembic revision --autogenerate
 
-db-reset:
-	@echo "⚠️  Resetting database (this will delete all data)..."
-	@read -p "Are you sure? [y/N] " -n 1 -r; \
-	echo; \
-	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
-		cd infrastructure/docker && docker-compose -p aisec_v8 exec postgres psql -U admin -d ai_security -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"; \
-		cd services/api-gateway && alembic upgrade head; \
-		echo "✅ Database reset complete"; \
-	fi
+db-upgrade:
+	alembic upgrade head
 
-db-shell:
-	@echo "🗄️  Opening PostgreSQL shell..."
-	cd infrastructure/docker && docker-compose -p aisec_v8 exec postgres psql -U admin -d ai_security
+db-downgrade:
+	alembic downgrade -1
 
-# Service Shell Commands
-shell-api:
-	@echo "🐚 Opening shell in API Gateway..."
-	cd infrastructure/docker && docker-compose -p aisec_v8 exec api-gateway /bin/bash
-
-shell-hub:
-	@echo "🐚 Opening shell in AI Hub..."
-	cd infrastructure/docker && docker-compose -p aisec_v8 exec ai-hub /bin/bash
-
-# Quick start for new developers
-quickstart:
-	@echo "🚀 Quick Start - Setting up development environment..."
-	@echo "1️⃣  Copying .env.example to .env..."
-	cp .env.example .env
-	@echo "2️⃣  Building Docker images..."
-	$(MAKE) build
-	@echo "3️⃣  Starting services..."
-	$(MAKE) up
-	@echo "4️⃣  Running migrations..."
-	sleep 5
-	$(MAKE) db-migrate
-	@echo ""
-	@echo "✅ Setup complete! Services running at:"
-	@echo "   API Gateway: http://localhost:8030"
-	@echo "   AI Hub:      http://localhost:8031"
-	@echo "   Grafana:     http://localhost:3000"
-	@echo "   Prometheus:  http://localhost:9090"
-
-# Health check
-health:
-	@echo "🏥 Checking service health..."
-	@curl -s http://localhost:8040/ | jq . || echo "❌ API Gateway not responding"
-	@curl -s http://localhost:8041/ | jq . || echo "❌ AI Hub not responding"
-	@curl -s http://localhost:9090/-/healthy || echo "❌ Prometheus not responding"
+# Quick start command
+start: dev

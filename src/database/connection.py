@@ -4,7 +4,14 @@ Database connection module for Infinite AI Security Platform
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from ..config.settings import settings
+import sys
+import os
+# Add the project root to the path
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
+from config import settings
 
 # Create the database engine
 engine = create_engine(

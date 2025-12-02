@@ -158,7 +158,7 @@ class Threat(Base):
     detected_at = Column(DateTime, default=func.now())
     mitigated = Column(Boolean, default=False)
     mitigation_steps = Column(JSON)
-    metadata = Column(JSON)
+    threat_metadata = Column(JSON)
 
     # Foreign keys
     scan_id = Column(UUID(as_uuid=True), ForeignKey("scans.id", ondelete="CASCADE"), nullable=False)

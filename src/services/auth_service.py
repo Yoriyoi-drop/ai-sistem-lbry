@@ -14,7 +14,7 @@ from collections import defaultdict
 
 from src.database.models import User, Organization
 from src.security import pwd_context, verify_password
-from src.config import settings
+from config import settings
 from src.services.organization_service import OrganizationService
 
 

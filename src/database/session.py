@@ -1,7 +1,7 @@
 """
 Database session factory for Infinite AI Security Platform
 """
-from .connection import SessionLocal
+from .connection import SessionLocal, get_db
 from contextlib import contextmanager
 
 
